@@ -14,7 +14,7 @@
  *
  */
 metadata {
-    definition(name: "Virtual Switch", namespace: "smartthings", author: "SmartThings", minHubCoreVersion: '000.021.00001', executeCommandsLocally: true, mnmn: "SmartThings", vid: "generic-switch") {
+    definition (name: "Virtual Switch", namespace: "smartthings", author: "SmartThings",  minHubCoreVersion: '000.021.00001', executeCommandsLocally: true, mnmn: "SmartThings", vid: "generic-switch") {
         capability "Actuator"
         capability "Sensor"
         capability "Switch"
@@ -23,12 +23,12 @@ metadata {
     preferences {}
 
     tiles(scale: 2) {
-        multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true) {
-            tileAttribute("device.switch", key: "PRIMARY_CONTROL") {
-                attributeState "on", label: '${name}', action: "switch.off", icon: "st.Home.home30", backgroundColor: "#00A0DC", nextState: "turningOff"
-                attributeState "off", label: '${name}', action: "switch.on", icon: "st.Home.home30", backgroundColor: "#FFFFFF", nextState: "turningOn", defaultState: true
-                attributeState "turningOn", label: 'Turning On', action: "switch.off", icon: "st.Home.home30", backgroundColor: "#00A0DC", nextState: "turningOn"
-                attributeState "turningOff", label: 'Turning Off', action: "switch.on", icon: "st.Home.home30", backgroundColor: "#FFFFFF", nextState: "turningOff"
+        multiAttributeTile(name:"switch", type: "lighting", width: 6, height: 4, canChangeIcon: true){
+            tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
+                attributeState "on", label:'${name}', action:"switch.off", icon:"st.Home.home30", backgroundColor:"#00A0DC", nextState:"turningOff"
+                attributeState "off", label:'${name}', action:"switch.on", icon:"st.Home.home30", backgroundColor:"#FFFFFF", nextState:"turningOn", defaultState: true
+                attributeState "turningOn", label:'Turning On', action:"switch.off", icon:"st.Home.home30", backgroundColor:"#00A0DC", nextState:"turningOn"
+                attributeState "turningOff", label:'Turning Off', action:"switch.on", icon:"st.Home.home30", backgroundColor:"#FFFFFF", nextState:"turningOff"
             }
         }
 
@@ -49,13 +49,13 @@ def parse(String description) {
 }
 
 def on() {
-    sendEvent(name: "switch", value: "on", isStateChange: true)
+    sendEvent(name: "switch", value: "on")
 }
 
 def off() {
-    sendEvent(name: "switch", value: "off", isStateChange: true)
+    sendEvent(name: "switch", value: "off")
 }
 
 def installed() {
-    on()
+   // on()
 }
