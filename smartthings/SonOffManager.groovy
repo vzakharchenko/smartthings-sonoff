@@ -23,12 +23,12 @@ def config() {
         }
 
         if (theHub) {
-        	if (state.sonoffMacDevices == null ){
-        		state.sonoffMacDevices = [:];
-        	}
-            if (state.sonoffDevicesTimes == null ){
-        		state.sonoffDevicesTimes = [:];
-        	}
+            if (state.sonoffMacDevices == null) {
+                state.sonoffMacDevices = [:];
+            }
+            if (state.sonoffDevicesTimes == null) {
+                state.sonoffDevicesTimes = [:];
+            }
             section("Info") {
                 if (!app.id) {
                     paragraph "After click save, please, open this smartapp once again!"
@@ -38,17 +38,17 @@ def config() {
                     paragraph "Please set \"applicationId\": ${app.id}, \"accessToken\": ${state.accessToken} on devices"
                 }
             }
-                            if (!state.sonoffMacDevices.isEmpty()) {
-                    section("Device List") {
-                        def deviceOptions = [];
-                        state.sonoffMacDevices.each { mac, ip ->
-                            deviceOptions.push(mac);
-                            }
-                                                    debug("deviceOptions:$deviceOptions")
-                        input "sonoffs", "enum", multiple: true, required: false, title: "Select Devices (${deviceOptions.size()} found)", options: deviceOptions
-                        }
-
+            if (!state.sonoffMacDevices.isEmpty()) {
+                section("Device List") {
+                    def deviceOptions = [];
+                    state.sonoffMacDevices.each { mac, ip ->
+                        deviceOptions.push(mac);
                     }
+                    debug("deviceOptions:$deviceOptions")
+                    input "sonoffs", "enum", multiple: true, required: false, title: "Select Devices (${deviceOptions.size()} found)", options: deviceOptions
+                }
+
+            }
 
         }
     }
@@ -63,7 +63,7 @@ def installed() {
 }
 
 def updated() {
- initialize()
+    initialize()
 }
 
 def initialize() {
@@ -72,14 +72,14 @@ def initialize() {
         sonoffs.each {
             def mac = it;
             def sonoffDevice = searchDevicesType("Virtual Switch").find {
-                    return it.getDeviceNetworkId() == mac
-    		};
-            if (sonoffDevice == null){
-            	sonoffDevice = addChildDevice("smartthings", "Virtual Switch", mac , theHub.id, [label: "Sonoff(${mac})", name: "Sonoff(${mac})"])
+                return it.getDeviceNetworkId() == mac
+            };
+            if (sonoffDevice == null) {
+                sonoffDevice = addChildDevice("smartthings", "Virtual Switch", mac, theHub.id, [label: "Sonoff(${mac})", name: "Sonoff(${mac})"])
             }
 
-               subscribe(sonoffDevice, "switch.on", switchOnHandler)
-               subscribe(sonoffDevice, "switch.off", switchOffHandler)
+            subscribe(sonoffDevice, "switch.on", switchOnHandler)
+            subscribe(sonoffDevice, "switch.off", switchOffHandler)
         }
     }
     subscribe(location, null, locationHandler)
@@ -110,58 +110,57 @@ mappings {
 
 def init() {
     def json = request.JSON;
-    state.sonoffMacDevices.put(json.mac,json.ip);
-    state.sonoffIpDevices.put(json.ip,json.mac);
+    state.sonoffMacDevices.put(json.mac, json.ip);
     def relay = json.relay;
-                    def sonoffDevice = searchDevicesType("Virtual Switch").find {
-                    return it.getDeviceNetworkId() == json.mac
-    		};
-                if (sonoffDevice != null){
-                debug("init: ${json.ip}:${sonoffDevice.getDeviceNetworkId()}:${relay}");
-            	if(relay.equals("on")){
-                	sonoffDevice.on();
-                } else
-                if(relay.equals("off")){
-                	sonoffDevice.off();
-                }
-            }
-    //updateActiveTime(json.mac)
+    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+        return it.getDeviceNetworkId() == json.mac
+    };
+    if (sonoffDevice != null) {
+        debug("init: ${json.ip}:${sonoffDevice.getDeviceNetworkId()}:${relay}");
+        if (relay.equals("on")) {
+            sonoffDevice.on();
+        } else if (relay.equals("off")) {
+            sonoffDevice.off();
+        }
+        updateActiveTime(json.mac)
+    }
+
     debug("init: $json")
     return [status: "ok"]
 }
 
-def updateActiveTime(mac){
-def date = new Date();
-debug("update time for ${mac} states: ${state.sonoffDevicesTimes}");
-	state.sonoffDevicesTimes.put(mac, date.getTime());
+def updateActiveTime(mac) {
+    def date = new Date();
+    debug("update time for ${mac} states: ${state.sonoffDevicesTimes}");
+    state.sonoffDevicesTimes.put(mac, date.getTime());
 }
 
 def on() {
     def json = request.JSON;
-    state.sonoffMacDevices.put(json.mac,json.ip);
-    state.sonoffIpDevices.put(json.ip,json.mac);
-                def sonoffDevice = searchDevicesType("Virtual Switch").find {
-                    return it.getDeviceNetworkId() == json.mac
-    		};
-            if (sonoffDevice != null){
-            	sonoffDevice.on()
-            }
-    //updateActiveTime(json.mac)
+    state.sonoffMacDevices.put(json.mac, json.ip);
+    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+        return it.getDeviceNetworkId() == json.mac
+    };
+    if (sonoffDevice != null) {
+        sonoffDevice.on()
+        updateActiveTime(json.mac)
+    }
+
     debug("on: $json")
     return [status: "ok"]
 }
 
 def off() {
     def json = request.JSON;
-    state.sonoffMacDevices.put(json.mac,json.ip);
-    state.sonoffIpDevices.put(json.ip,json.mac);
-                    def sonoffDevice = searchDevicesType("Virtual Switch").find {
-                    return it.getDeviceNetworkId() == json.mac
-    		};
-            if (sonoffDevice != null){
-            	sonoffDevice.off()
-            }
-           // updateActiveTime(json.mac)
+    state.sonoffMacDevices.put(json.mac, json.ip);
+    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+        return it.getDeviceNetworkId() == json.mac
+    };
+    if (sonoffDevice != null) {
+        sonoffDevice.off()
+        updateActiveTime(json.mac)
+    }
+
     debug("off: $json")
     return [status: "ok"]
 }
@@ -189,26 +188,30 @@ def searchDevicesType(devType) {
 }
 
 def switchOnHandler(evt) {
-	def mac =  evt.getDevice().getDeviceNetworkId();
+    def mac = evt.getDevice().getDeviceNetworkId();
     def ip = state.sonoffMacDevices.get(mac);
-    apiGet(ip,80,"on",[])
+    apiGet(ip, 80, "on", [])
 }
 
 def switchOffHandler(evt) {
-	def mac =  evt.getDevice().getDeviceNetworkId();
+    def mac = evt.getDevice().getDeviceNetworkId();
     def ip = state.sonoffMacDevices.get(mac);
-    apiGet(ip,80,"off",[])
+    apiGet(ip, 80, "off", [])
 }
 
-def healthCheck(){
-def devices = searchDevicesType("Virtual Switch")
-def fiveMins =1000*60*5;
-def curTime = new Date().getTime();
-devices.each {
-    def mac =  it.getDeviceNetworkId();
-    def ip = state.sonoffMacDevices.get(mac);
-    it.parent.apiGet(ip,80,"health",[])
-
+def healthCheck() {
+    def devices = searchDevicesType("Virtual Switch")
+    def sixMins = 1000 * 60 * 5;
+    def curTime = new Date().getTime();
+    devices.each {
+        def mac = it.getDeviceNetworkId();
+        def ip = state.sonoffMacDevices.get(mac);
+        it.parent.apiGet(ip, 80, "health", [])
+        def activeDate = state.sonoffDevicesTimes.get(mac);
+        if (curTime - sixMins > activeDate) {
+            it.setOffline();
+            debug("ip ${ip} offline")
+        }
     }
 }
 
@@ -221,20 +224,20 @@ def locationHandler(evt) {
     def relay = json.relay;
     debug("ip $ip : $relay");
     def sonoffDevice = searchDevicesType("Virtual Switch").find {
-         return it.getDeviceNetworkId() == json.mac
+        return it.getDeviceNetworkId() == json.mac
     };
-            if (sonoffDevice != null){
-            	if(relay.equals("on")){
+    if (sonoffDevice != null) {
+        updateActiveTime(json.mac)
+        if (relay.equals("on")) {
 
-                	sonoffDevice.on();
-                } else
-                if(relay.equals("off")){
-                	sonoffDevice.off();
-                }
-            }
+            sonoffDevice.on();
+        } else if (relay.equals("off")) {
+            sonoffDevice.off();
+        }
+    }
 }
 
-def apiGet(ip,port,path, query) {
+def apiGet(ip, port, path, query) {
     def url = "${ip}:${port}";
     log.debug "request:  ${url}/${path} query= ${query}"
     def result = new physicalgraph.device.HubAction(
@@ -252,7 +255,7 @@ def apiGet(ip,port,path, query) {
 }
 
 def debug(message) {
-    def debug = false
+    def debug = true
     if (debug) {
         log.debug message
     }
