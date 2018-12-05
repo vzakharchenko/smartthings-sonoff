@@ -5,7 +5,7 @@ definition(
         mnmn: "SmartThings",
         namespace: "smartthings",
         author: "Vasiliy Zakharchenko",
-        description: "Create/Delete SonOff device",
+        description: "Create/Delete SonOff devices",
         category: "My Apps",
         iconUrl: "https://cdn.itead.cc/media/catalog/product/cache/1/thumbnail/160x160/9df78eab33525d08d6e5fb8d27136e95/s/o/sonoff_03.jpg",
         iconX2Url: "https://cdn.itead.cc/media/catalog/product/cache/1/thumbnail/160x160/9df78eab33525d08d6e5fb8d27136e95/s/o/sonoff_03.jpg")
@@ -190,27 +190,35 @@ def searchDevicesType(devType) {
 def switchOnHandler(evt) {
     def mac = evt.getDevice().getDeviceNetworkId();
     def ip = state.sonoffMacDevices.get(mac);
-    apiGet(ip, 80, "on", [])
+    runIn(10, "switchHandler", [data: [ip: ip, mode: "on"], overwrite: true])
 }
 
 def switchOffHandler(evt) {
     def mac = evt.getDevice().getDeviceNetworkId();
     def ip = state.sonoffMacDevices.get(mac);
-    apiGet(ip, 80, "off", [])
+    runIn(10, "switchHandler", [data: [ip: ip, mode: "off"], overwrite: true])
+}
+
+def switchHandler(data) {
+    debug("switchHandler = ${data}")
+    def ip = data.ip;
+    apiGet(ip, 80, data.mode, [])
 }
 
 def healthCheck() {
     def devices = searchDevicesType("Virtual Switch")
-    def sixMins = 1000 * 60 * 5;
+    def timeout = 1000 * 60 * 30;
     def curTime = new Date().getTime();
     devices.each {
         def mac = it.getDeviceNetworkId();
         def ip = state.sonoffMacDevices.get(mac);
         it.parent.apiGet(ip, 80, "health", [])
         def activeDate = state.sonoffDevicesTimes.get(mac);
-        if (curTime - sixMins > activeDate) {
+        if ((curTime - timeout) > activeDate) {
             it.setOffline();
-            debug("ip ${ip} offline")
+            debug("ip ${ip} offline ${curTime-timeout} > ${activeDate} ")
+        } else{
+            debug("ip ${ip} online ${curTime-timeout} < ${activeDate} ")
         }
     }
 }
@@ -220,7 +228,6 @@ def locationHandler(evt) {
     def msg = parseLanMessage(description)
     def json = msg.json
     def ip = json.ip;
-    def mac = json.mac;
     def relay = json.relay;
     debug("ip $ip : $relay");
     def sonoffDevice = searchDevicesType("Virtual Switch").find {
@@ -255,7 +262,7 @@ def apiGet(ip, port, path, query) {
 }
 
 def debug(message) {
-    def debug = true
+    def debug = fase
     if (debug) {
         log.debug message
     }
