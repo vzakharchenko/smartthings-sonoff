@@ -262,7 +262,7 @@ def apiGet(ip, port, path, query) {
 }
 
 def debug(message) {
-    def debug = fase
+    def debug = false
     if (debug) {
         log.debug message
     }
