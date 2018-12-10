@@ -82,7 +82,7 @@ def initialize() {
             subscribe(sonoffDevice, "switch.off", switchOffHandler)
         }
     }
-    subscribe(location, null, locationHandler)
+    // subscribe(location, null, locationHandler)
     runEvery5Minutes(healthCheck)
 }
 
@@ -104,6 +104,12 @@ mappings {
         action:
         [
                 POST: "off"
+        ]
+    }
+    path("/current") {
+        action:
+        [
+                POST: "curState"
         ]
     }
 }
@@ -137,17 +143,31 @@ def updateActiveTime(mac) {
 
 def on() {
     def json = request.JSON;
+    debug("on: $json")
+    def relay = "undefined";
     state.sonoffMacDevices.put(json.mac, json.ip);
     def sonoffDevice = searchDevicesType("Virtual Switch").find {
         return it.getDeviceNetworkId() == json.mac
     };
     if (sonoffDevice != null) {
-        sonoffDevice.on()
+        if (json.force) {
+            sonoffDevice.on();
+            relay = "on";
+        } else {
+            def switchData = sonoffDevice.currentState("switch");
+            def switchState = switchData.value;
+            if (switchState == "on") {
+                relay = "on";
+            } else {
+                relay = "off";
+            }
+        }
+
         updateActiveTime(json.mac)
     }
 
-    debug("on: $json")
-    return [status: "ok"]
+
+    return [relay: relay]
 }
 
 def off() {
@@ -163,6 +183,22 @@ def off() {
 
     debug("off: $json")
     return [status: "ok"]
+}
+
+def curState() {
+    def state = "undefined";
+    def name = "undefined";
+    def json = request.JSON;
+    // state.sonoffMacDevices.put(json.mac, json.ip);
+    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+        return it.getDeviceNetworkId() == json.mac
+    };
+    if (sonoffDevice != null) {
+        def switchData = sonoffDevice.currentState("switch");
+        state = switchData.value
+        name = switchData.linkText;
+    }
+    return [status: state, name: name]
 }
 
 def getToken() {
@@ -190,13 +226,13 @@ def searchDevicesType(devType) {
 def switchOnHandler(evt) {
     def mac = evt.getDevice().getDeviceNetworkId();
     def ip = state.sonoffMacDevices.get(mac);
-    runIn(10, "switchHandler", [data: [ip: ip, mode: "on"], overwrite: true])
+    runIn(1, "switchHandler", [data: [ip: ip, mode: "on"], overwrite: true])
 }
 
 def switchOffHandler(evt) {
     def mac = evt.getDevice().getDeviceNetworkId();
     def ip = state.sonoffMacDevices.get(mac);
-    runIn(10, "switchHandler", [data: [ip: ip, mode: "off"], overwrite: true])
+    runIn(1, "switchHandler", [data: [ip: ip, mode: "off"], overwrite: true])
 }
 
 def switchHandler(data) {
@@ -216,13 +252,13 @@ def healthCheck() {
         def activeDate = state.sonoffDevicesTimes.get(mac);
         if ((curTime - timeout) > activeDate) {
             it.setOffline();
-            debug("ip ${ip} offline ${curTime-timeout} > ${activeDate} ")
-        } else{
-            debug("ip ${ip} online ${curTime-timeout} < ${activeDate} ")
+            debug("ip ${ip} offline ${curTime - timeout} > ${activeDate} ")
+        } else {
+            debug("ip ${ip} online ${curTime - timeout} < ${activeDate} ")
         }
     }
 }
-
+/*
 def locationHandler(evt) {
     def description = evt.description
     def msg = parseLanMessage(description)
@@ -242,7 +278,7 @@ def locationHandler(evt) {
             sonoffDevice.off();
         }
     }
-}
+}*/
 
 def apiGet(ip, port, path, query) {
     def url = "${ip}:${port}";
