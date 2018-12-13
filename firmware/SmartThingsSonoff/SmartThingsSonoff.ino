@@ -226,7 +226,7 @@ void handlePow () {
 }
 
 void handleRoot() {
-  server.send ( 200, "text/html", (const char *)sonoffLine_html );
+  server.send ( 200, "text/html", (const char *)index_html );
 }
 
 void handleNotFound() {
