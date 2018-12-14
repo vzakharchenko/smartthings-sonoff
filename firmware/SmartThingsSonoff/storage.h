@@ -150,6 +150,10 @@ class Storage
       return configuration.package;
     }
 
+    int getStorageVersion() {
+      return configuration.storageVersion;
+    }
+
     String getSmartThingsUrl() {
       return configuration.smartThingsUrl;
     }

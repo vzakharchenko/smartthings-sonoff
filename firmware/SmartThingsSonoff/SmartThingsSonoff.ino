@@ -123,8 +123,7 @@ void handleSettings () {
   storage.setDefaultState(defaultState);
   storage.save();
   smartThings.smartthingsInit();
-  server.sendHeader("Location", "/");
-  server.send(303);
+  handleState();
 }
 
 void handleToggle () {
@@ -133,8 +132,7 @@ void handleToggle () {
   } else {
     switchOn(true);
   }
-  server.sendHeader("Location", "/");
-  server.send(303);
+  handleState();
 }
 
 void handleOn () {
@@ -174,6 +172,8 @@ void handleState () {
                 + String(storage.getSmartThingsUrl())
                 + "\", \"smartthingsName\":\""
                 + String(std.devName)
+                + "\", \"versionFirmware\":\""
+                + String(storage.getPackageVersion())+"."+String(storage.getStorageVersion())
                 + "\", \"smartthingsStatus\":\""
                 + devStatus
                 + "\", \"pow\":\""
@@ -226,7 +226,7 @@ void handlePow () {
 }
 
 void handleRoot() {
-  server.send ( 200, "text/html", (const char *)index_html );
+  server.send ( 200, "text/html", (const char *)target_index0_html );
 }
 
 void handleNotFound() {
@@ -262,7 +262,7 @@ void setup ( void ) {
   }
   ticker.detach();
   digitalWrite ( led, 1 );
-  
+
   Serial.println ( "" );
   Serial.print ( "Connected to " );
   Serial.println ( WiFi.SSID() );
@@ -276,6 +276,7 @@ void setup ( void ) {
   }
 
   server.on ( "/", handleRoot );
+  server.on ( "/index.html", handleRoot );
   server.on ( "/config", HTTP_POST, handleSettings );
   server.on ( "/toggle", HTTP_POST, handleToggle );
   server.on ( "/on", handleOn);
