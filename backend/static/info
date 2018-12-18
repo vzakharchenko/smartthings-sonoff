@@ -1,0 +1,27 @@
+{
+   "relay":"on",
+   "uptime":5427860,
+   "ssid":"Zoechka",
+   "ip":"192.100.205.174",
+   "mac":"BC:DD:C2:07:89:00",
+   "applicationId":"2",
+   "accessToken":"1",
+   "smartThingsUrl":"https://graph-eu01-euwest1.api.smartthings.com",
+   "smartthings":{
+      "status":"on",
+      "name":"Test Device",
+      "devices":{
+         "devices":{
+            "BC:DD:C2:07:89:00":{
+               "ip":"192.100.205.174",
+               "lastTime":1545089500059,
+               "name":"Test Device",
+               "status":"on"
+            }
+         }
+      }
+   },
+   "versionFirmware":"13.101",
+   "pow":"0",
+   "defaultState":3
+}

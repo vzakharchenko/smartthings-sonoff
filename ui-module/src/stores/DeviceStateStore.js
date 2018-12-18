@@ -26,6 +26,8 @@ export class DeviceStateStore {
 
     @observable smartthingsStatus = '';
 
+    @observable smartthingsDevices = null;
+
     @observable versionFirmware = '';
 
     @observable pow = false;
@@ -77,8 +79,9 @@ export class DeviceStateStore {
       this.applicationId = res.applicationId;
       this.accessToken = res.accessToken;
       this.smartThingsUrl = res.smartThingsUrl;
-      this.smartthingsName = res.smartthingsName;
-      this.smartthingsStatus = res.smartthingsStatus;
+      this.smartthingsName = res.smartthings.name;
+      this.smartthingsStatus = res.smartthings.status;
+      this.smartthingsDevices = res.smartthings.devices.devices;
       this.pow = res.pow;
       this.defaultState = res.defaultState;
       this.versionFirmware = res.versionFirmware;
@@ -88,7 +91,7 @@ export class DeviceStateStore {
 
     @action load() {
       this.isLoading = true;
-      fetchData(`${serverUrl}state`).then(action(({ data }) => {
+      fetchData(`${serverUrl}info`).then(action(({ data }) => {
         this.parseState(data);
       })).catch(
         action(({ data }) => {

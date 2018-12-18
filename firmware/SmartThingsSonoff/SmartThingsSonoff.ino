@@ -123,7 +123,7 @@ void handleSettings () {
   storage.setDefaultState(defaultState);
   storage.save();
   smartThings.smartthingsInit();
-  handleState();
+  handleInfo();
 }
 
 void handleToggle () {
@@ -132,7 +132,7 @@ void handleToggle () {
   } else {
     switchOn(true);
   }
-  handleState();
+  handleInfo();
 }
 
 void handleOn () {
@@ -183,9 +183,40 @@ void handleState () {
                 + " }");
 }
 
+void handleInfo () {
+  
+  String payload = smartThings.getSmartThingsDevices();
+  server.send ( 200, "application/json",
+                "{ \"relay\": \""
+                + String(sonoff.relay.isOn() ? "on" : "off")
+                + "\",\"uptime\":" +
+                String(millis()) +
+                ", \"ssid\": \""
+                + WiFi.SSID() +
+                "\",\"ip\":\""
+                + IpAddress2String( WiFi.localIP())
+                + "\", \"mac\":\""
+                + String(WiFi.macAddress())
+                + "\", \"applicationId\":\""
+                + String(storage.getApplicationId())
+                + "\", \"accessToken\":\""
+                + String(storage.getAccessToken())
+                + "\", \"smartThingsUrl\":\""
+                + String(storage.getSmartThingsUrl())
+                + "\", \"smartthings\":"
+                + String(payload)
+                + ", \"versionFirmware\":\""
+                + String(storage.getPackageVersion())+"."+String(storage.getStorageVersion())
+                + "\", \"pow\":\""
+                + String(sonoff.isPow())
+                + "\", \"defaultState\":"
+                + String(storage.getDefaultState())
+                + " }");
+}
+
 void handleinit () {
   smartThings.smartthingsInit();
-  handleState ();
+  handleInfo ();
 }
 
 void handlePow () {
@@ -221,7 +252,7 @@ void handlePow () {
                   + String(sonoff.getPowerMultiplier())
                   + "\" }");
   } else {
-    handleState ();
+    handleInfo ();
   }
 }
 
@@ -282,6 +313,7 @@ void setup ( void ) {
   server.on ( "/on", handleOn);
   server.on ( "/off", handleOff );
   server.on ( "/state", handleState);
+  server.on ( "/info", handleInfo);
   server.on ( "/health", handleinit);
   server.on ( "/pow", handlePow);
   server.onNotFound ( handleNotFound );

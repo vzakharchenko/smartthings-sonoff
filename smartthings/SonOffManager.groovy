@@ -112,6 +112,13 @@ mappings {
                 POST: "curState"
         ]
     }
+
+    path("/info") {
+        action:
+        [
+                POST: "info"
+        ]
+    }
 }
 
 def init() {
@@ -186,8 +193,8 @@ def off() {
 }
 
 def curState() {
-    def state = "undefined";
-    def name = "undefined";
+    def state = "";
+    def name = "";
     def json = request.JSON;
     // state.sonoffMacDevices.put(json.mac, json.ip);
     def sonoffDevice = searchDevicesType("Virtual Switch").find {
@@ -199,6 +206,30 @@ def curState() {
         name = switchData.linkText;
     }
     return [status: state, name: name]
+}
+
+def info() {
+    def curState = curState();
+    curState.devices = listOfDevices();
+    return curState
+}
+
+def listOfDevices() {
+    def sonoffDevices = [:];
+    state.sonoffMacDevices.each { mac, ip ->
+        def sonoffDevice = searchDevicesType("Virtual Switch").find {
+            return it.getDeviceNetworkId() == mac
+        }
+        def switchValue = "";
+        def name = "";
+        if (sonoffDevice != null) {
+            def switchData = sonoffDevice.currentState("switch");
+            switchValue = switchData.value
+            name = switchData.linkText;
+        }
+        sonoffDevices.put(mac, [ip: ip, lastTime: state.sonoffDevicesTimes.get(mac), name: name, status: switchValue]);
+    }
+    return [devices: sonoffDevices]
 }
 
 def getToken() {

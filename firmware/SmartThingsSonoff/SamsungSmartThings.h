@@ -168,6 +168,24 @@ class SmartThings
       return smartThingsDevice;
     }
 
+    String getSmartThingsDevices() {
+      String payload = "{}";
+      if (String(storage->getApplicationId()) != String("") &&
+          String(storage->getAccessToken()) != String("")) {
+        HTTPClient2 http;
+        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/info?access_token=" + String(storage->getAccessToken());
+        Serial.println ( "Starting SmartThings Http current : " + url );
+        http.beginInternal2(url, "https");
+        http.addHeader("Content-Type", "application/json");
+        http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff->isPow()) + "\" }");
+        payload = http.getString();
+        http.end();
+
+      }
+      return payload;
+
+    }
+
     int off(boolean force) {
       return changeState("off", force);
     }
@@ -190,7 +208,7 @@ class SmartThings
                   + "\", \"relay\": \""
                   + String(sonoff->relay.isOn() ? "on" : "off")
                   + "\",\"pow\":\"" + String(sonoff->isPow()) + "\"}");
-     //   http.writeToStream(&Serial);
+        //   http.writeToStream(&Serial);
         http.end();
       } else {
         Serial.println ( "SmartThings Init Skip" );

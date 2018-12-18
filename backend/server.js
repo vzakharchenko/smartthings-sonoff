@@ -14,7 +14,19 @@ server.use(function(req, res, next) {
 server.use('/', express.static(`${__dirname}/static`));
 
 server.post('/config', (req, res) => {
-    fs.readFile(`${__dirname}/static/state`, function read(err, data) {
+    fs.readFile(`${__dirname}/static/info`, function read(err, data) {
+        if (err) {
+            throw err;
+        }
+        content = data;
+
+        console.log(content);
+        res.send(content);
+    });
+});
+
+server.post('/toggle', (req, res) => {
+    fs.readFile(`${__dirname}/static/info`, function read(err, data) {
         if (err) {
             throw err;
         }

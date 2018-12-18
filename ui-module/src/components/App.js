@@ -29,8 +29,8 @@ class App extends React.Component {
               maxWidth: '20%',
               height: 'auto',
               display: 'block',
-              'margin-left': 'auto',
-              'margin-right': 'auto',
+              marginLeft: 'auto',
+              marginRight: 'auto',
               width: '50%',
             }}
           />
@@ -39,8 +39,8 @@ class App extends React.Component {
         <Panel.Body style={{
           height: 'auto',
           display: 'block',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
+          marginLeft: 'auto',
+          marginRight: 'auto',
           width: '50%',
         }}
         >
