@@ -107,8 +107,8 @@ export class DeviceStateStore {
       const url = `${serverUrl}toggle`;
       sendData(url, 'POST', JSON.stringify({
         relay: this.relay ? 'on' : 'off',
-        ip: '192.100.200.13',
-        mac: '80:7D:3A:45:E8:16',
+        ip: this.ip,
+        mac: this.mac,
       })).then(action(({ data }) => {
         this.parseState(data);
       })).catch(

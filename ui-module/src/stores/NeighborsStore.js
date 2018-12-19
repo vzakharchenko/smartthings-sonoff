@@ -1,5 +1,5 @@
 import { observable, action } from 'mobx';
-import { fetchData } from '../utils/restCalls';
+import { sendData } from '../utils/restCalls';
 
 
 export class NeighborsStore {
@@ -7,9 +7,12 @@ export class NeighborsStore {
 
     @observable devicePending = {};
 
-    @action requestChangeState(ip, state) {
+    @action requestChangeState(ip) {
       this.devicePending[ip] = true;
-      fetchData(`http://${ip}/${state}`).then(action(({ data }) => {
+      sendData(`http://${ip}/toggle`, 'POST', JSON.stringify({
+        relay: 'off',
+        ip,
+      })).then(action(({ data }) => {
         const json = JSON.parse(data);
         this.devicesStatus[ip] = { status: json.relay };
       })).catch(

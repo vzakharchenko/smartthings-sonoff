@@ -130,37 +130,32 @@ void handleSettings () {
 }
 
 void handleToggle () {
-  if (sonoff.relay.isOn()) {
-    switchOff(true);
+  if (server.method() == HTTP_OPTIONS)
+  {
+    cors();
+
+    server.send(204);
   } else {
-    switchOn(true);
+    cors();
+    if (sonoff.relay.isOn()) {
+      switchOff(true);
+    } else {
+      switchOn(true);
+    }
+    handleInfo();
   }
-  handleInfo();
 }
 
 void handleOn () {
-  if (server.method() == HTTP_OPTIONS)
-  {
-    cors();
 
-    server.send(204);
-  } else {
-    cors();
-    switchOn(false);
-    server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
-  }
+  switchOn(false);
+  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
 }
 
+
 void handleOff () {
-  if (server.method() == HTTP_OPTIONS)
-  {
-    cors();
-    server.send(204);
-  } else {
-    cors();
-    switchOff(false);
-    server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\" ,\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
-  }
+  switchOff(false);
+  server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\" ,\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
 }
 
 void handleState () {
@@ -308,6 +303,7 @@ void setup ( void ) {
   storage.load();
   ticker.attach(0.6, tick);
   WiFiManager wifiManager;
+  // wifiManager.resetSettings();//todo
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect(ssid, password)) {
     Serial.println("failed to connect and hit timeout");

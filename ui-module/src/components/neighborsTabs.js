@@ -8,15 +8,8 @@ export default @inject('deviceStateStore', 'neighborsStore')
 
 @observer
 class NeighborsTab extends React.Component {
-    handleChange = (ip, status) => {
-      let newStatus = status;
-      if (status === 'on') {
-        newStatus = 'off';
-      } else if (status === 'off') {
-        newStatus = 'on';
-      }
-      console.log(`ip=${ip}, status=${status}`);
-      this.props.neighborsStore.requestChangeState(ip, newStatus);
+    handleChange = (ip) => {
+      this.props.neighborsStore.requestChangeState(ip);
     };
 
     render() {
@@ -38,30 +31,30 @@ class NeighborsTab extends React.Component {
             {
 
                     Object.entries(smartthingsDevices).map((map) => {
-                      const { ip } = map[1].ip;
+                      const { ip, lastTime, name } = map[1];
                       const isPending = devicePending[ip];
                       const st = map[1].status;
                       const ds = devicesStatus[ip] ? devicesStatus[ip].status : st;
                       const status = ds || st;
                       return (
                         <tr>
-                          <td><a href={`http://${map[1].ip}`}>{map[1].ip}</a></td>
+                          <td><a href={`http://${ip}`}>{ip}</a></td>
                           <td>{map[0]}</td>
                           <td>
-                            {(new Date().getTime() - map[1].lastTime) > (1000 * 60 * 30)
+                            {(new Date().getTime() - lastTime) > (1000 * 60 * 30)
                               ? 'Offline' : 'Online'}
                           </td>
-                          <td>{map[1].name}</td>
+                          <td>{name}</td>
                           <td>
                             <Button
                               bsStyle="primary"
                               disabled={isPending}
-                              onClick={() => this.handleChange(map[1].ip, status)}
+                              onClick={() => this.handleChange(ip, status)}
                             >
                               {isPending ? 'changing' : status}
                             </Button>
                           </td>
-                          <td><a href={`http://${map[1].ip}/update`}>upgrade</a></td>
+                          <td><a href={`http://${ip}/update`}>upgrade</a></td>
                         </tr>);
                     })}
 
