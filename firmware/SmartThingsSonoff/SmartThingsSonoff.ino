@@ -91,7 +91,7 @@ void switchOn(boolean force) {
 
 void switchOff(boolean force) {
   if (force || (sonoff.relay.isOn())) {
-     sw(false);
+    sw(false);
     int result = smartThings.off(force);
     boolean relayState = result == 1 ? true : false;
     if (!force) {
@@ -105,7 +105,14 @@ int getSwitchState() {
   return smartThings.getSmartThingsDevice().state;
 }
 
-
+void cors () {
+  String ip = server.client().remoteIP().toString();
+  server.sendHeader("Access-Control-Allow-Origin", "http://" + String(ip));
+  server.sendHeader("Access-Control-Max-Age", "10000");
+  server.sendHeader("Access-Control-Allow-Credentials", "true");
+  server.sendHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "*");
+}
 
 void handleSettings () {
   String smartThingsUrl = server.arg("smartThingsUrl");
@@ -132,55 +139,77 @@ void handleToggle () {
 }
 
 void handleOn () {
-  switchOn(false);
-  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+  if (server.method() == HTTP_OPTIONS)
+  {
+    cors();
+
+    server.send(204);
+  } else {
+    cors();
+    switchOn(false);
+    server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+  }
 }
 
 void handleOff () {
-  switchOff(false);
-  server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\" ,\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+  if (server.method() == HTTP_OPTIONS)
+  {
+    cors();
+    server.send(204);
+  } else {
+    cors();
+    switchOff(false);
+    server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\" ,\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+  }
 }
 
 void handleState () {
-  SmartThingDevice std = smartThings.getSmartThingsDevice();
-  String devStatus = "undefined";
-  if (std.state == 0) {
-    devStatus = "off";
+  if (server.method() == HTTP_OPTIONS)
+  {
+    cors();
+    server.send(204);
   } else {
-    devStatus = "on";
+    cors();
+    SmartThingDevice std = smartThings.getSmartThingsDevice();
+    String devStatus = "undefined";
+    if (std.state == 0) {
+      devStatus = "off";
+    } else {
+      devStatus = "on";
+    }
+    server.send ( 200, "application/json",
+                  "{ \"relay\": \""
+                  + String(sonoff.relay.isOn() ? "on" : "off")
+                  + "\",\"uptime\":" +
+                  String(millis()) +
+                  ", \"ssid\": \""
+                  + WiFi.SSID() +
+                  "\",\"ip\":\""
+                  + IpAddress2String( WiFi.localIP())
+                  + "\", \"mac\":\""
+                  + String(WiFi.macAddress())
+                  + "\", \"applicationId\":\""
+                  + String(storage.getApplicationId())
+                  + "\", \"accessToken\":\""
+                  + String(storage.getAccessToken())
+                  + "\", \"smartThingsUrl\":\""
+                  + String(storage.getSmartThingsUrl())
+                  + "\", \"smartthingsName\":\""
+                  + String(std.devName)
+                  + "\", \"versionFirmware\":\""
+                  + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
+                  + "\", \"smartthingsStatus\":\""
+                  + devStatus
+                  + "\", \"pow\":\""
+                  + String(sonoff.isPow())
+                  + "\", \"defaultState\":"
+                  + String(storage.getDefaultState())
+                  + " }");
   }
-  server.send ( 200, "application/json",
-                "{ \"relay\": \""
-                + String(sonoff.relay.isOn() ? "on" : "off")
-                + "\",\"uptime\":" +
-                String(millis()) +
-                ", \"ssid\": \""
-                + WiFi.SSID() +
-                "\",\"ip\":\""
-                + IpAddress2String( WiFi.localIP())
-                + "\", \"mac\":\""
-                + String(WiFi.macAddress())
-                + "\", \"applicationId\":\""
-                + String(storage.getApplicationId())
-                + "\", \"accessToken\":\""
-                + String(storage.getAccessToken())
-                + "\", \"smartThingsUrl\":\""
-                + String(storage.getSmartThingsUrl())
-                + "\", \"smartthingsName\":\""
-                + String(std.devName)
-                + "\", \"versionFirmware\":\""
-                + String(storage.getPackageVersion())+"."+String(storage.getStorageVersion())
-                + "\", \"smartthingsStatus\":\""
-                + devStatus
-                + "\", \"pow\":\""
-                + String(sonoff.isPow())
-                + "\", \"defaultState\":"
-                + String(storage.getDefaultState())
-                + " }");
 }
 
 void handleInfo () {
-  
+
   String payload = smartThings.getSmartThingsDevices();
   server.send ( 200, "application/json",
                 "{ \"relay\": \""
@@ -202,7 +231,7 @@ void handleInfo () {
                 + "\", \"smartthings\":"
                 + String(payload)
                 + ", \"versionFirmware\":\""
-                + String(storage.getPackageVersion())+"."+String(storage.getStorageVersion())
+                + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
                 + "\", \"pow\":\""
                 + String(sonoff.isPow())
                 + "\", \"defaultState\":"
@@ -279,7 +308,6 @@ void setup ( void ) {
   storage.load();
   ticker.attach(0.6, tick);
   WiFiManager wifiManager;
- // wifiManager.resetSettings();//todo
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect(ssid, password)) {
     Serial.println("failed to connect and hit timeout");

@@ -3,11 +3,13 @@ import ReactDOM from 'react-dom';
 import { Provider } from 'mobx-react';
 import deviceStateStore from './stores/DeviceStateStore';
 import tabsStore from './stores/TabsStore';
+import neighborsStore from './stores/NeighborsStore';
 import App from './components/App';
 
 const stores = {
   deviceStateStore,
   tabsStore,
+  neighborsStore,
 };
 
 // For easier debugging

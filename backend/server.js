@@ -2,10 +2,11 @@ const express = require('express');
 const fs = require('fs');
 const server = express();
 const port = 8082;
+const remotePort=`${process.env.remotePort||8080}`;
 
 
 server.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "http://localhost:8080");
+    res.header("Access-Control-Allow-Origin", "http://192.100.200.240");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     res.header("Access-Control-Allow-Credentials", "true");
     next();

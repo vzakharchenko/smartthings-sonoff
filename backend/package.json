@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "start:80": "remotePort=80 node server.js"
   },
   "author": "",
   "license": "ISC",

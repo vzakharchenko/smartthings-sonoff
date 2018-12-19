@@ -6,6 +6,7 @@
   "scripts": {
     "postinstall": "npm run lint",
     "start": "NODE_ENV=development webpack-dev-server --hot --mode=development",
+    "start:80": "NODE_ENV=development webpack-dev-server --hot --mode=development --host 0.0.0.0 --port 80",
     "start:prod_test2": "npm install && npm run build:prod && cd staticServer && npm i && npm run start ",
     "build:dev": "NODE_ENV=development webpack -p --mode=development ",
     "build:prod": "NODE_ENV=production ./node_modules/.bin/webpack -p --mode=production ",

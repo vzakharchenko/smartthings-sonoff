@@ -13,7 +13,7 @@
       "devices":{
          "devices":{
             "BC:DD:C2:07:89:00":{
-               "ip":"192.100.205.174",
+               "ip":"192.100.200.13",
                "lastTime":1545089500059,
                "name":"Test Device",
                "status":"on"
