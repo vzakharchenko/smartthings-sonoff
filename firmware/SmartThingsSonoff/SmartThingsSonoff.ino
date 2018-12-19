@@ -106,8 +106,8 @@ int getSwitchState() {
 }
 
 void cors () {
-  String ip = server.client().remoteIP().toString();
-  server.sendHeader("Access-Control-Allow-Origin", "http://" + String(ip));
+  String origin = server.arg("origin");
+  server.sendHeader("Access-Control-Allow-Origin", String(origin));
   server.sendHeader("Access-Control-Max-Age", "10000");
   server.sendHeader("Access-Control-Allow-Credentials", "true");
   server.sendHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");

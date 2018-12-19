@@ -9,7 +9,7 @@ export class NeighborsStore {
 
     @action requestChangeState(ip) {
       this.devicePending[ip] = true;
-      sendData(`http://${ip}/toggle`, 'POST', JSON.stringify({
+      sendData(`http://${ip}/toggle?origin=${window.location.origin}`, 'POST', JSON.stringify({
         relay: 'off',
         ip,
       })).then(action(({ data }) => {
