@@ -79,9 +79,7 @@ void sw(boolean relayState) {
 void switchOn(boolean force) {
 
   if (force || !sonoff.relay.isOn()) {
-    if (force) {
-      sw(true);
-    }
+    sw(true);
     int result = smartThings.on(force);
     boolean relayState =  result == 0 ? false : true;
     if (!force) {
@@ -93,9 +91,7 @@ void switchOn(boolean force) {
 
 void switchOff(boolean force) {
   if (force || (sonoff.relay.isOn())) {
-    if (force) {
-      sw(false);
-    }
+     sw(false);
     int result = smartThings.off(force);
     boolean relayState = result == 1 ? true : false;
     if (!force) {

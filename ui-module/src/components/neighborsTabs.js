@@ -18,6 +18,7 @@ class NeighborsTab extends React.Component {
             <th>Health Status</th>
             <th>Name</th>
             <th>Status</th>
+            <th>Firmware</th>
           </tr>
         </thead>
         <tbody>
@@ -33,6 +34,7 @@ class NeighborsTab extends React.Component {
                     </td>
                     <td>{map[1].name}</td>
                     <td>{map[1].status}</td>
+                    <td><a href={`http://${map[1].ip}/update`}>upgrade</a></td>
                   </tr>
                 ))}
 

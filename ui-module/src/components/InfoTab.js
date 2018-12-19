@@ -71,6 +71,10 @@ class InfoTab extends React.Component {
               <td>Firmware Version</td>
               <td>{versionFirmware}</td>
             </tr>
+            <tr>
+              <td>Firmware</td>
+              <td><a href={`http://${ip}/update`}>update</a></td>
+            </tr>
           </tbody>
         </Table>
       );

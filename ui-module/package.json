@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "postinstall": "npm run lint",
     "start": "NODE_ENV=development webpack-dev-server --hot --mode=development",
     "start:prod_test2": "npm install && npm run build:prod && cd staticServer && npm i && npm run start ",
     "build:dev": "NODE_ENV=development webpack -p --mode=development ",
