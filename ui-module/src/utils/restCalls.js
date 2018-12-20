@@ -12,7 +12,6 @@ export function fetchData(url, method = 'GET', headers) {
       headers,
       transformResponse: req => req,
       withCredentials: true,
-      timeout: 29000,
     }).then((response) => {
       resolve(response);
     }).catch((response) => {
@@ -31,7 +30,6 @@ export function sendData(url, method = 'POST', data, headers) {
       transformResponse: req => req,
       headers,
       withCredentials: true,
-      timeout: 29000,
     }).then((response) => {
       resolve(response);
     }).catch((response) => {
