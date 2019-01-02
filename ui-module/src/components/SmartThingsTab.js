@@ -8,7 +8,13 @@ export default
 @observer
 class SmartThingsTab extends React.Component {
   render() {
-    const { smartthingsName, smartthingsStatus } = this.props.deviceStateStore;
+    const { smartthingsName, smartthingsStatus, deviceType } = this.props.deviceStateStore;
+    let statusString = 'Switch Status';
+    let smartthingsStatusString = smartthingsStatus;
+    if (deviceType === 1) {
+      statusString = 'Door Status';
+      smartthingsStatusString = smartthingsStatus === 'on' ? 'OK' : 'Failed';
+    }
     return (
       <Table striped bordered condensed hover>
         <thead>
@@ -23,8 +29,8 @@ class SmartThingsTab extends React.Component {
             <td>{smartthingsName}</td>
           </tr>
           <tr>
-            <td>Switch Status</td>
-            <td>{smartthingsStatus}</td>
+            <td>{statusString}</td>
+            <td>{smartthingsStatusString}</td>
           </tr>
         </tbody>
       </Table>

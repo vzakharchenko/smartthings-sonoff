@@ -105,6 +105,12 @@ int getSwitchState() {
   return smartThings.getSmartThingsDevice().state;
 }
 
+void openDoor() {
+  relayOff();
+  delay(storage.getOpenTimeOut());
+  switchOn(true);
+}
+
 void cors () {
   String origin = server.arg("origin");
   server.sendHeader("Access-Control-Allow-Origin", String(origin));
@@ -119,11 +125,17 @@ void handleSettings () {
   String applicationId = server.arg("applicationId");
   String accessToken = server.arg("accessToken");
   String defaultStateString = server.arg("defaultState");
+  String deviceTypeString = server.arg("deviceType");
+  String openTimeOutString = server.arg("openTimeOut");
   storage.setSmartThingsUrl(smartThingsUrl);
   storage.setApplicationId(applicationId);
   storage.setAccessToken(accessToken);
   int defaultState = (defaultStateString == String("")) ? 0 : defaultStateString.toInt();
+  int deviceType = (deviceTypeString == String("")) ? 0 : deviceTypeString.toInt();
+  int openTimeOut = (openTimeOutString == String("")) ? 2000 : openTimeOutString.toInt();
   storage.setDefaultState(defaultState);
+  storage.setDeviceType(defaultState);
+  storage.setOpenTimeOut(openTimeOut);
   storage.save();
   smartThings.smartthingsInit();
   handleInfo();
@@ -137,11 +149,17 @@ void handleToggle () {
     server.send(204);
   } else {
     cors();
-    if (sonoff.relay.isOn()) {
-      switchOff(true);
-    } else {
-      switchOn(true);
+    int deviceType = storage.getDeviceType();
+    if (deviceType == 0) {
+      if (sonoff.relay.isOn()) {
+        switchOff(true);
+      } else {
+        switchOn(true);
+      }
+    } else if (deviceType == 1) {
+      openDoor();
     }
+
     handleInfo();
   }
 }
@@ -149,6 +167,11 @@ void handleToggle () {
 void handleOn () {
 
   switchOn(false);
+  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+}
+
+void handleOpen () {
+  openDoor();
   server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
 }
 
@@ -227,7 +250,11 @@ void handleInfo () {
                 + String(payload)
                 + ", \"versionFirmware\":\""
                 + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
-                + "\", \"pow\":\""
+                + "\", \"openTimeOut\":"
+                + String(storage.getOpenTimeOut())
+                + ", \"deviceType\":"
+                + String(storage.getDeviceType())
+                + ", \"pow\":\""
                 + String(sonoff.isPow())
                 + "\", \"defaultState\":"
                 + String(storage.getDefaultState())
@@ -331,6 +358,7 @@ void setup ( void ) {
   server.on ( "/config", HTTP_POST, handleSettings );
   server.on ( "/toggle", HTTP_POST, handleToggle );
   server.on ( "/on", handleOn);
+  server.on ( "/open", handleOpen);
   server.on ( "/off", handleOff );
   server.on ( "/state", handleState);
   server.on ( "/info", handleInfo);

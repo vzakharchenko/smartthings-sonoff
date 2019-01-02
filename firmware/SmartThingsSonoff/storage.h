@@ -35,14 +35,30 @@ class Storage
       char signature[3];
     } Configuration13101;
 
-    Configuration13101 configuration {
+    typedef struct
+    {
+      byte package;
+      int storageVersion;
+      char smartThingsUrl[128];
+      char applicationId[128];
+      char accessToken[128];
+      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      bool  lastState;// last state of relay
+      int deviceType;// 0- relay, 1 - Vizit intercom
+      int openTimeOut; // open door timeoutVizit intercom()
+      char signature[3];
+    } Configuration13102;
+
+    Configuration13102 configuration {
       13,
-      101,
+      102,
       "",
       "",
       "",
       0,
       false,
+      0,
+      2000,
       "OK"
     };
 
@@ -135,6 +151,33 @@ class Storage
           Serial.println ( "Storage loaded" );
           if (String(readConfiguration.signature) == String("OK")) {
             Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
+            strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
+            strcpy(configuration.applicationId, readConfiguration.applicationId);
+            strcpy(configuration.accessToken, readConfiguration.accessToken);
+            configuration.defaultState = readConfiguration.defaultState;
+            configuration.lastState = readConfiguration.lastState;
+            save();
+          } else {
+            Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
+          }
+        }
+        if (storageVersion == 102) {
+          Configuration13102 readConfiguration {
+            13,
+            102,
+            "",
+            "",
+            "",
+            0,
+            false,
+            0,
+            2000,
+            "BD"
+          };
+          loadStruct(&readConfiguration, sizeof(readConfiguration));
+          Serial.println ( "Storage loaded" );
+          if (String(readConfiguration.signature) == String("OK")) {
+            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
             this->configuration = readConfiguration;
           } else {
             Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
@@ -193,9 +236,26 @@ class Storage
     void setLastState(bool lastState) {
       configuration.lastState = lastState;
     }
-    
+
     bool isValid() {
       return String(configuration.signature) == String("OK");
     }
+
+    int getDeviceType() {
+      return configuration.deviceType;
+    }
+
+    void setDeviceType(int deviceType) {
+      configuration.deviceType = deviceType;
+    }
+
+    int getOpenTimeOut() {
+      return configuration.openTimeOut;
+    }
+
+    int setOpenTimeOut(int timeOut) {
+      configuration.openTimeOut = timeOut;
+    }
+
 
 };

@@ -8,20 +8,22 @@
    "accessToken":"1",
    "smartThingsUrl":"https://graph-eu01-euwest1.api.smartthings.com",
    "smartthings":{
-      "status":"on",
-      "name":"Test Device",
+      "status":"off",
+      "name":"test",
       "devices":{
          "devices":{
-            "BC:DD:C2:07:89:00":{
-               "ip":"192.100.200.13",
-               "lastTime":1545089500059,
-               "name":"Test Device",
-               "status":"on"
+            "5C:CF:7F:7F:00:00":{
+               "ip":"192.100.111.1",
+               "lastTime":1546459343611,
+               "name":"Test",
+               "status":"off"
             }
          }
       }
    },
-   "versionFirmware":"13.101",
+   "versionFirmware":"13.102",
+   "openTimeOut":2000,
+   "deviceType":1,
    "pow":"0",
    "defaultState":3
 }

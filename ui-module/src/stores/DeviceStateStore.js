@@ -34,6 +34,10 @@ export class DeviceStateStore {
 
     @observable defaultState = 0;
 
+    @observable deviceType = 0;
+
+    @observable openTimeOut = 2000;
+
     @observable isLoading = false;
 
     @observable isChanging = false;
@@ -48,24 +52,32 @@ export class DeviceStateStore {
     validationForm() {
       let isValid = true;
       if (!this.applicationId
-          || this.applicationId.length === 0
-          || this.applicationId.length > 127) {
+            || this.applicationId.length === 0
+            || this.applicationId.length > 127) {
         isValid = false;
       }
       if (!this.accessToken
-          || this.accessToken.length === 0
-          || this.accessToken.length > 127) {
+            || this.accessToken.length === 0
+            || this.accessToken.length > 127) {
         isValid = false;
       }
       if (!this.smartThingsUrl
-          || this.smartThingsUrl.length === 0
-          || this.smartThingsUrl.length > 127) {
+            || this.smartThingsUrl.length === 0
+            || this.smartThingsUrl.length > 127) {
         isValid = false;
       }
       if (this.defaultState < 0
-          || this.defaultState > 3) {
+            || this.defaultState > 3) {
         isValid = false;
       }
+      if (this.deviceType < 0
+            || this.deviceType > 1) {
+        isValid = false;
+        if (this.deviceType === 1 && this.openTimeOut < 0) {
+          isValid = false;
+        }
+      }
+
       this.isValid = isValid;
     }
 
@@ -84,6 +96,8 @@ export class DeviceStateStore {
       this.smartthingsDevices = res.smartthings.devices.devices;
       this.pow = res.pow;
       this.defaultState = res.defaultState;
+      this.deviceType = res.deviceType;
+      this.openTimeOut = res.openTimeOut;
       this.versionFirmware = res.versionFirmware;
       this.validationForm();
     }
@@ -127,7 +141,13 @@ export class DeviceStateStore {
 
     @action saveForm() {
       this.isSaving = true;
-      const postData = `applicationId=${encodeURIComponent(this.applicationId)}&accessToken=${encodeURIComponent(this.accessToken)}&smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}&defaultState=${this.defaultState}`;
+      const postData = `applicationId=${encodeURIComponent(this.applicationId)}
+      &accessToken=${encodeURIComponent(this.accessToken)}
+      &smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}
+      &deviceType=${this.deviceType}
+      &openTimeOut=${this.openTimeOut}
+      &defaultState=${this.defaultState}`;
+
       sendData(`${serverUrl}config`, 'POST', postData, {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,application/json,*/*;q=0.8',
         'Content-Type': 'application/x-www-form-urlencoded',

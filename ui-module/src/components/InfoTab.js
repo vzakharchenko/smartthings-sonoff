@@ -21,10 +21,13 @@ class InfoTab extends React.Component {
         uptime,
         ssid,
         ip,
+        pow,
         mac,
         versionFirmware,
+        deviceType,
       } = this.props.deviceStateStore;
-      const relayState = relay ? 'On' : 'Off';
+      let relayState = relay ? 'On' : 'Off';
+      relayState = deviceType === 1 ? 'Open' : relayState;
       const json = jsonbuild ? new Date(JSON.parse(jsonbuild).buildDate).toLocaleString() : 'undefined';
       return (
         <Table striped bordered condensed hover>
@@ -36,7 +39,7 @@ class InfoTab extends React.Component {
           </thead>
           <tbody>
             <tr>
-              <td>Relay</td>
+              <td>{deviceType === 1 ? 'Door' : 'Relay'}</td>
               <td>
                 <Button
                   bsStyle="primary"
@@ -66,6 +69,10 @@ class InfoTab extends React.Component {
             <tr>
               <td>UI Version</td>
               <td>{json}</td>
+            </tr>
+            <tr>
+              <td>POW</td>
+              <td>{pow}</td>
             </tr>
             <tr>
               <td>Firmware Version</td>

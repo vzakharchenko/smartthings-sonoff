@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "start:80": "remotePort=80 node server.js"
+    "start:80": "remotePort=8080 node server.js"
   },
   "author": "",
   "license": "ISC",

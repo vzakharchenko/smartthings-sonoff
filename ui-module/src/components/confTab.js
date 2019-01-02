@@ -29,7 +29,14 @@ class ConfigurationTab extends React.Component {
 
     render() {
       const {
-        smartThingsUrl, applicationId, accessToken, defaultState, isSaving, isValid,
+        smartThingsUrl,
+        applicationId,
+        accessToken,
+        defaultState,
+        isSaving,
+        isValid,
+        deviceType,
+        openTimeOut,
       } = this.props.deviceStateStore;
       return (
         <form>
@@ -105,6 +112,39 @@ class ConfigurationTab extends React.Component {
             </FormControl>
             <FormControl.Feedback />
           </FormGroup>
+          <FormGroup
+            controlId="deviceType"
+          >
+            <ControlLabel>Device Type</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="Device Type"
+              name="deviceType"
+              defaultValue={deviceType}
+              onChange={this.handleChangeState}
+            >
+              <option value="0">Relay Sonoff</option>
+              <option value="1">Vizit Intercom</option>
+            </FormControl>
+            <FormControl.Feedback />
+          </FormGroup>
+          {parseInt(deviceType, 10) === 1 ? (
+            <FormGroup
+              controlId="openTimeOut"
+            >
+              <ControlLabel>SmartThings Open Door TimeOut</ControlLabel>
+              <FormControl
+                type="number"
+                name="openTimeOut"
+                value={openTimeOut}
+                placeholder="open Door TimeOut"
+                onChange={this.handleChangeState}
+              />
+              <FormControl.Feedback />
+            </FormGroup>
+          ) : null
+            }
+
           <Button
             bsStyle="primary"
             disabled={isSaving || !isValid}
