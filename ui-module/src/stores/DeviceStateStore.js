@@ -141,12 +141,7 @@ export class DeviceStateStore {
 
     @action saveForm() {
       this.isSaving = true;
-      const postData = `applicationId=${encodeURIComponent(this.applicationId)}
-      &accessToken=${encodeURIComponent(this.accessToken)}
-      &smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}
-      &deviceType=${this.deviceType}
-      &openTimeOut=${this.openTimeOut}
-      &defaultState=${this.defaultState}`;
+      const postData = `applicationId=${encodeURIComponent(this.applicationId)}&accessToken=${encodeURIComponent(this.accessToken)}&smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}&deviceType=${this.deviceType}&openTimeOut=${this.openTimeOut}&defaultState=${this.defaultState}`;
 
       sendData(`${serverUrl}config`, 'POST', postData, {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,application/json,*/*;q=0.8',
