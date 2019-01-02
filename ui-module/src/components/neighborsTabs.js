@@ -13,7 +13,7 @@ class NeighborsTab extends React.Component {
     };
 
     render() {
-      const { smartthingsDevices } = this.props.deviceStateStore;
+      const { smartthingsDevices, deviceType } = this.props.deviceStateStore;
       const { devicePending, devicesStatus } = this.props.neighborsStore;
       return (
         <Table striped bordered condensed hover>
@@ -36,6 +36,7 @@ class NeighborsTab extends React.Component {
                       const st = map[1].status;
                       const ds = devicesStatus[ip] ? devicesStatus[ip].status : st;
                       const status = ds || st;
+                      const statusString = deviceType === 1 ? 'Open' : status;
                       return (
                         <tr>
                           <td><a href={`http://${ip}`}>{ip}</a></td>
@@ -51,7 +52,7 @@ class NeighborsTab extends React.Component {
                               disabled={isPending}
                               onClick={() => this.handleChange(ip, status)}
                             >
-                              {isPending ? 'changing' : status}
+                              {isPending ? 'changing' : statusString}
                             </Button>
                           </td>
                           <td><a href={`http://${ip}/update`}>upgrade</a></td>
