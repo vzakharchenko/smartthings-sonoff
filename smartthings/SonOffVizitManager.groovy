@@ -71,7 +71,7 @@ def initialize() {
     if (sonoffs) {
         sonoffs.each {
             def mac = it;
-            def sonoffDevice = searchDevicesType("Virtual Switch").find {
+            def sonoffDevice = searchDevicesType("Door Shield").find {
                 return it.getDeviceNetworkId() == mac
             };
             if (sonoffDevice == null) {
@@ -99,12 +99,6 @@ mappings {
                 POST: "on"
         ]
     }
-    path("/off") {
-        action:
-        [
-                POST: "off"
-        ]
-    }
     path("/current") {
         action:
         [
@@ -124,7 +118,7 @@ def init() {
     def json = request.JSON;
     state.sonoffMacDevices.put(json.mac, json.ip);
     def relay = json.relay;
-    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+    def sonoffDevice = searchDevicesType("Door Shield").find {
         return it.getDeviceNetworkId() == json.mac
     };
     if (sonoffDevice != null) {
@@ -144,55 +138,30 @@ def updateActiveTime(mac) {
 }
 
 def on() {
+
     def json = request.JSON;
     debug("on: $json")
     def relay = "undefined";
     state.sonoffMacDevices.put(json.mac, json.ip);
-    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+    def sonoffDevice = searchDevicesType("Door Shield").find {
         return it.getDeviceNetworkId() == json.mac
     };
     if (sonoffDevice != null) {
-        if (json.force) {
-            sonoffDevice.on();
-            relay = "on";
-        } else {
-            def switchData = sonoffDevice.currentState("switch");
-            def switchState = switchData.value;
-            if (switchState == "on") {
-                relay = "on";
-            } else {
-                relay = "off";
-            }
-        }
-
         updateActiveTime(json.mac)
     }
 
 
     return [relay: relay]
+
 }
 
-def off() {
-    def json = request.JSON;
-    state.sonoffMacDevices.put(json.mac, json.ip);
-    def sonoffDevice = searchDevicesType("Virtual Switch").find {
-        return it.getDeviceNetworkId() == json.mac
-    };
-    if (sonoffDevice != null) {
-        sonoffDevice.off()
-        updateActiveTime(json.mac)
-    }
-
-    debug("off: $json")
-    return [status: "ok"]
-}
 
 def curState() {
     def state = "";
     def name = "";
     def json = request.JSON;
     // state.sonoffMacDevices.put(json.mac, json.ip);
-    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+    def sonoffDevice = searchDevicesType("Door Shield").find {
         return it.getDeviceNetworkId() == json.mac
     };
     if (sonoffDevice != null) {
@@ -212,7 +181,7 @@ def info() {
 def listOfDevices() {
     def sonoffDevices = [:];
     state.sonoffMacDevices.each { mac, ip ->
-        def sonoffDevice = searchDevicesType("Virtual Switch").find {
+        def sonoffDevice = searchDevicesType("Door Shield").find {
             return it.getDeviceNetworkId() == mac
         }
         def switchValue = "";
@@ -262,7 +231,7 @@ def switchHandler(data) {
 }
 
 def healthCheck() {
-    def devices = searchDevicesType("Virtual Switch")
+    def devices = searchDevicesType("Door Shield")
     def timeout = 1000 * 60 * 30;
     def curTime = new Date().getTime();
     devices.each {
@@ -278,7 +247,7 @@ def healthCheck() {
         }
     }
 }
-/*
+
 def locationHandler(evt) {
     def description = evt.description
     def msg = parseLanMessage(description)
@@ -291,9 +260,9 @@ def locationHandler(evt) {
     };
     if (sonoffDevice != null) {
         updateActiveTime(json.mac)
- sonoffDevice.on();
+        sonoffDevice.on();
     }
-}*/
+}
 
 def apiGet(ip, port, path, query) {
     def url = "${ip}:${port}";
