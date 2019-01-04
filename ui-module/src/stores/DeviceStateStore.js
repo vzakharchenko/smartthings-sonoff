@@ -77,12 +77,9 @@ export class DeviceStateStore {
             || this.defaultState > 3) {
         isValid = false;
       }
-      if (this.deviceType < 0
-            || this.deviceType > 1) {
+
+      if (this.deviceType === 1 && this.openTimeOut < 0) {
         isValid = false;
-        if (this.deviceType === 1 && this.openTimeOut < 0) {
-          isValid = false;
-        }
       }
 
       this.isValid = isValid;

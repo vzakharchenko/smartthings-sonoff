@@ -35,8 +35,8 @@ Ticker ticker;
 void tick()
 {
   //toggle state
-  int state = digitalRead(sonoff.getLed());  
-  digitalWrite(sonoff.getLed(), !state);  
+  int state = digitalRead(sonoff.getLed());
+  digitalWrite(sonoff.getLed(), !state);
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {
@@ -180,7 +180,7 @@ void handleOff () {
   server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\"  }" );
 }
 
-void handleReset(){
+void handleReset() {
   server.send ( 200, "application/json", "{ \"Status\":\"OK\" ,\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\"  }" );
   ESP.reset();
 }
@@ -224,7 +224,9 @@ void handleState () {
                   + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
                   + "\", \"smartthingsStatus\":\""
                   + devStatus
-                  + "\", \"defaultState\":"
+                  + "\", \"deviceType\":"
+                  + String(storage.getDeviceType())
+                  + ",  \"defaultState\":"
                   + String(storage.getDefaultState())
                   + " }");
   }
@@ -241,8 +243,8 @@ void handleInfo () {
                 ", \"ssid\": \""
                 + WiFi.SSID() +
                 "\", \"hostName\": \""
-                  + WiFi.hostname() +
-                  "\",\"ip\":\""
+                + WiFi.hostname() +
+                "\",\"ip\":\""
                 + IpAddress2String( WiFi.localIP())
                 + "\", \"mac\":\""
                 + String(WiFi.macAddress())
@@ -260,7 +262,7 @@ void handleInfo () {
                 + String(storage.getOpenTimeOut())
                 + ", \"deviceType\":"
                 + String(storage.getDeviceType())
-                + ",, \"defaultState\":"
+                + ", \"defaultState\":"
                 + String(storage.getDefaultState())
                 + " }");
 }
