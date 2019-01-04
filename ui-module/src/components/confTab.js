@@ -95,24 +95,6 @@ class ConfigurationTab extends React.Component {
             </HelpBlock>
           </FormGroup>
           <FormGroup
-            controlId="defaultState"
-          >
-            <ControlLabel>PowerState at startup</ControlLabel>
-            <FormControl
-              componentClass="select"
-              placeholder="PowerState at startup"
-              name="defaultState"
-              defaultValue={defaultState}
-              onChange={this.handleChangeState}
-            >
-              <option value="0">Off</option>
-              <option value="1">On</option>
-              <option value="2">Latest</option>
-              <option value="3">SmartThings</option>
-            </FormControl>
-            <FormControl.Feedback />
-          </FormGroup>
-          <FormGroup
             controlId="deviceType"
           >
             <ControlLabel>Device Type</ControlLabel>
@@ -128,6 +110,26 @@ class ConfigurationTab extends React.Component {
             </FormControl>
             <FormControl.Feedback />
           </FormGroup>
+          {parseInt(deviceType, 10) !== 1 ? (
+            <FormGroup
+              controlId="defaultState"
+            >
+              <ControlLabel>PowerState at startup</ControlLabel>
+              <FormControl
+                componentClass="select"
+                placeholder="PowerState at startup"
+                name="defaultState"
+                defaultValue={defaultState}
+                onChange={this.handleChangeState}
+              >
+                <option value="0">Off</option>
+                <option value="1">On</option>
+                <option value="2">Latest</option>
+                <option value="3">SmartThings</option>
+              </FormControl>
+              <FormControl.Feedback />
+            </FormGroup>
+          ) : null}
           {parseInt(deviceType, 10) === 1 ? (
             <FormGroup
               controlId="openTimeOut"

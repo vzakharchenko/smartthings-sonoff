@@ -141,6 +141,9 @@ export class DeviceStateStore {
 
     @action saveForm() {
       this.isSaving = true;
+      if (this.deviceType === 1 || this.deviceType === '1') {
+        this.defaultState = 1;
+      }
       const postData = `applicationId=${encodeURIComponent(this.applicationId)}&accessToken=${encodeURIComponent(this.accessToken)}&smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}&deviceType=${this.deviceType}&openTimeOut=${this.openTimeOut}&defaultState=${this.defaultState}`;
 
       sendData(`${serverUrl}config`, 'POST', postData, {
