@@ -6,6 +6,7 @@ import FormControl from 'react-bootstrap/lib/FormControl';
 import HelpBlock from 'react-bootstrap/lib/HelpBlock';
 import Button from 'react-bootstrap/lib/Button';
 import Image from 'react-bootstrap/lib/Image';
+import deviceTypeMap from '../utils/deviceTypeMap';
 
 
 const staticServerUrl = process.env.STATIC_SERVER_URL;
@@ -105,8 +106,18 @@ class ConfigurationTab extends React.Component {
               defaultValue={deviceType}
               onChange={this.handleChangeState}
             >
-              <option value="0">Relay Sonoff</option>
-              <option value="1">Vizit Intercom</option>
+              <option value="0">
+                { deviceTypeMap()['0']}
+              </option>
+              <option value="1">
+                { deviceTypeMap()['1']}
+              </option>
+              <option value="2">
+                { deviceTypeMap()['2']}
+              </option>
+              <option value="3">
+                { deviceTypeMap()['3']}
+              </option>
             </FormControl>
             <FormControl.Feedback />
           </FormGroup>

@@ -18,13 +18,13 @@ class App extends React.Component {
   }
 
   render() {
-    const { isLoading } = this.props.deviceStateStore;
+    const { isLoading, deviceType } = this.props.deviceStateStore;
     return (
       <Panel>
         <Panel.Heading>
 
           <Image
-            src={`${staticServerUrl}logo.png`}
+            src={`${staticServerUrl}${deviceType}.jpg`}
             style={{
               maxWidth: '20%',
               height: 'auto',

@@ -88,7 +88,7 @@ class SmartThings
         Serial.println ( "Starting SmartThings Http " + operation + " : " + url );
         http.beginInternal2(url, "https");
         http.addHeader("Content-Type", "application/json");
-        int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff->isPow()) + "\",\"force\":" + String((force ? "true" : "false")) + "}");
+        int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"force\":" + String((force ? "true" : "false")) + "}");
         if (httpCode > 199 && httpCode < 301) {
           String payload = http.getString();
           Serial.println ( "payload = " + payload );
@@ -146,7 +146,7 @@ class SmartThings
         Serial.println ( "Starting SmartThings Http current : " + url );
         http.beginInternal2(url, "https");
         http.addHeader("Content-Type", "application/json");
-        http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff->isPow()) + "\" }");
+        http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
         String payload = http.getString();
         DynamicJsonBuffer jsonBuffer;
         JsonObject& root = jsonBuffer.parseObject(payload);
@@ -177,7 +177,7 @@ class SmartThings
         Serial.println ( "Starting SmartThings Http current : " + url );
         http.beginInternal2(url, "https");
         http.addHeader("Content-Type", "application/json");
-        http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff->isPow()) + "\" }");
+        http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
         payload = http.getString();
         http.end();
 
@@ -206,8 +206,8 @@ class SmartThings
                   + "\",\"mac\":\""
                   + String(WiFi.macAddress())
                   + "\", \"relay\": \""
-                  + String(sonoff->relay.isOn() ? "on" : "off")
-                  + "\",\"pow\":\"" + String(sonoff->isPow()) + "\"}");
+                  + String(sonoff->getRelay().isOn() ? "on" : "off")
+                  + "\"}");
         //   http.writeToStream(&Serial);
         http.end();
       } else {

@@ -30,7 +30,7 @@ export class DeviceStateStore {
 
     @observable versionFirmware = '';
 
-    @observable pow = false;
+    @observable hostName = '';
 
     @observable defaultState = 0;
 
@@ -66,6 +66,13 @@ export class DeviceStateStore {
             || this.smartThingsUrl.length > 127) {
         isValid = false;
       }
+
+      if (!this.hostName
+            || this.hostName.length === 0
+            || this.hostName.length > 127) {
+        isValid = false;
+      }
+
       if (this.defaultState < 0
             || this.defaultState > 3) {
         isValid = false;
@@ -94,11 +101,11 @@ export class DeviceStateStore {
       this.smartthingsName = res.smartthings.name;
       this.smartthingsStatus = res.smartthings.status;
       this.smartthingsDevices = res.smartthings.devices.devices;
-      this.pow = res.pow;
       this.defaultState = res.defaultState;
       this.deviceType = res.deviceType;
       this.openTimeOut = res.openTimeOut;
       this.versionFirmware = res.versionFirmware;
+      this.hostName = res.hostName;
       this.validationForm();
     }
 

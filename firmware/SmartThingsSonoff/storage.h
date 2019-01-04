@@ -44,7 +44,7 @@ class Storage
       char accessToken[128];
       int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
       bool  lastState;// last state of relay
-      int deviceType;// 0- relay, 1 - Vizit intercom
+      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
       int openTimeOut; // open door timeoutVizit intercom()
       char signature[3];
     } Configuration13102;

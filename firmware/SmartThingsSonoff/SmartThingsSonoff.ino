@@ -26,18 +26,17 @@ boolean buttonStateLast = false;
 ESP8266WebServer server ( 80 );
 ESP8266HTTPUpdateServer httpUpdater;
 
-Sonoff sonoff;
+
 Storage storage;
+Sonoff sonoff(&storage);
 SmartThings smartThings(&sonoff, &storage );
 Ticker ticker;
-
-const int led = LED;
 
 void tick()
 {
   //toggle state
-  int state = digitalRead(led);  // get the current state of GPIO1 pin
-  digitalWrite(led, !state);     // set pin to the opposite state
+  int state = digitalRead(sonoff.getLed());  
+  digitalWrite(sonoff.getLed(), !state);  
 }
 
 void configModeCallback (WiFiManager *myWiFiManager) {
@@ -54,15 +53,15 @@ void switchOff() {
 }
 
 void relayOn() {
-  sonoff.relay.on();
-  digitalWrite ( led, 0 );
+  sonoff.getRelay().on();
+  digitalWrite ( sonoff.getLed(), 0 );
 }
 
 
 
 void relayOff() {
-  sonoff.relay.off();
-  digitalWrite ( led, 1 );
+  sonoff.getRelay().off();
+  digitalWrite ( sonoff.getLed(), 1 );
 }
 
 
@@ -78,7 +77,7 @@ void sw(boolean relayState) {
 
 void switchOn(boolean force) {
 
-  if (force || !sonoff.relay.isOn()) {
+  if (force || !sonoff.getRelay().isOn()) {
     sw(true);
     int result = smartThings.on(force);
     boolean relayState =  result == 0 ? false : true;
@@ -90,7 +89,7 @@ void switchOn(boolean force) {
 }
 
 void switchOff(boolean force) {
-  if (force || (sonoff.relay.isOn())) {
+  if (force || (sonoff.getRelay().isOn())) {
     sw(false);
     int result = smartThings.off(force);
     boolean relayState = result == 1 ? true : false;
@@ -150,13 +149,13 @@ void handleToggle () {
   } else {
     cors();
     int deviceType = storage.getDeviceType();
-    if (deviceType == 0) {
-      if (sonoff.relay.isOn()) {
+    if (deviceType != SONOFF_INTERCOM) {
+      if (sonoff.getRelay().isOn()) {
         switchOff(true);
       } else {
         switchOn(true);
       }
-    } else if (deviceType == 1) {
+    } else {
       openDoor();
     }
 
@@ -167,18 +166,23 @@ void handleToggle () {
 void handleOn () {
 
   switchOn(false);
-  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }" );
 }
 
 void handleOpen () {
   openDoor();
-  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }" );
 }
 
 
 void handleOff () {
   switchOff(false);
-  server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\" ,\"pow\":\"" + String(sonoff.isPow()) + "\" }" );
+  server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\"  }" );
+}
+
+void handleReset(){
+  server.send ( 200, "application/json", "{ \"Status\":\"OK\" ,\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\"  }" );
+  ESP.reset();
 }
 
 void handleState () {
@@ -197,11 +201,13 @@ void handleState () {
     }
     server.send ( 200, "application/json",
                   "{ \"relay\": \""
-                  + String(sonoff.relay.isOn() ? "on" : "off")
+                  + String(sonoff.getRelay().isOn() ? "on" : "off")
                   + "\",\"uptime\":" +
                   String(millis()) +
                   ", \"ssid\": \""
                   + WiFi.SSID() +
+                  "\", \"hostName\": \""
+                  + WiFi.hostname() +
                   "\",\"ip\":\""
                   + IpAddress2String( WiFi.localIP())
                   + "\", \"mac\":\""
@@ -218,8 +224,6 @@ void handleState () {
                   + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
                   + "\", \"smartthingsStatus\":\""
                   + devStatus
-                  + "\", \"pow\":\""
-                  + String(sonoff.isPow())
                   + "\", \"defaultState\":"
                   + String(storage.getDefaultState())
                   + " }");
@@ -231,12 +235,14 @@ void handleInfo () {
   String payload = smartThings.getSmartThingsDevices();
   server.send ( 200, "application/json",
                 "{ \"relay\": \""
-                + String(sonoff.relay.isOn() ? "on" : "off")
+                + String(sonoff.getRelay().isOn() ? "on" : "off")
                 + "\",\"uptime\":" +
                 String(millis()) +
                 ", \"ssid\": \""
                 + WiFi.SSID() +
-                "\",\"ip\":\""
+                "\", \"hostName\": \""
+                  + WiFi.hostname() +
+                  "\",\"ip\":\""
                 + IpAddress2String( WiFi.localIP())
                 + "\", \"mac\":\""
                 + String(WiFi.macAddress())
@@ -254,9 +260,7 @@ void handleInfo () {
                 + String(storage.getOpenTimeOut())
                 + ", \"deviceType\":"
                 + String(storage.getDeviceType())
-                + ", \"pow\":\""
-                + String(sonoff.isPow())
-                + "\", \"defaultState\":"
+                + ",, \"defaultState\":"
                 + String(storage.getDefaultState())
                 + " }");
 }
@@ -264,43 +268,6 @@ void handleInfo () {
 void handleinit () {
   smartThings.smartthingsInit();
   handleInfo ();
-}
-
-void handlePow () {
-  if (sonoff.isPow()) {
-    server.send ( 200, "application/json",
-                  "{ \"relay\": \""
-                  + String(sonoff.relay.isOn() ? "on" : "off")
-                  + "\",\"ip\":\""
-                  + IpAddress2String( WiFi.localIP())
-                  + "\", \"mac\":\""
-                  + String(WiFi.macAddress())
-                  + "\", \"pow\":\""
-                  + String(sonoff.isPow())
-                  + "\", \"voltage\":\""
-                  + String(sonoff.getVoltage())
-                  + "\", \"current\":\""
-                  + String(sonoff.getCurrent())
-                  + "\", \"activePower\":\""
-                  + String(sonoff.getActivePower())
-                  + "\", \"apparentPower\":\""
-                  + String(sonoff.getApparentPower())
-                  + "\", \"powerFactor\":\""
-                  + String(sonoff.getPowerFactor())
-                  + "\", \"reactivePower\":\""
-                  + String(sonoff.getReactivePower())
-                  + "\", \"energy\":\""
-                  + String(sonoff.getEnergy())
-                  + "\", \"currentMultiplier\":\""
-                  + String(sonoff.getCurrentMultiplier())
-                  + "\", \"voltageMultiplier\":\""
-                  + String(sonoff.getVoltageMultiplier())
-                  + "\", \"powerMultiplier\":\""
-                  + String(sonoff.getPowerMultiplier())
-                  + "\" }");
-  } else {
-    handleInfo ();
-  }
 }
 
 void handleRoot() {
@@ -325,21 +292,22 @@ void handleNotFound() {
 }
 
 void setup ( void ) {
-  pinMode ( led, OUTPUT );
+  pinMode ( sonoff.getLed(), OUTPUT );
   Serial.begin ( 9600 );
   storage.load();
   ticker.attach(0.6, tick);
   WiFiManager wifiManager;
   // wifiManager.resetSettings();//todo
+  wifiManager.setTimeout(180);
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect(ssid, password)) {
-    Serial.println("failed to connect and hit timeout");
-    //reset and try again, or maybe put it to deep sleep
+    Serial.println("failed to connect, we should reset as see if it connects");
+    delay(3000);
     ESP.reset();
-    delay(1000);
+    delay(5000);
   }
   ticker.detach();
-  digitalWrite ( led, 1 );
+  digitalWrite ( sonoff.getLed(), 1 );
 
   Serial.println ( "" );
   Serial.print ( "Connected to " );
@@ -363,7 +331,7 @@ void setup ( void ) {
   server.on ( "/state", handleState);
   server.on ( "/info", handleInfo);
   server.on ( "/health", handleinit);
-  server.on ( "/pow", handlePow);
+  server.on ( "/reset", handleReset);
   server.onNotFound ( handleNotFound );
   httpUpdater.setup(&server);
   server.begin();
@@ -412,19 +380,15 @@ void loop ( void ) {
   server.handleClient();
   sonoff.loop();
   boolean buttonState = sonoff.IsButtonOn();
-#ifdef SWITCH14
-  if (buttonStateLast != buttonState ) {
+  if (sonoff.IsButtonChanged()) {
     if (buttonState) {
       switchOn(true);
     } else {
       switchOff(true);
     }
-    buttonStateLast =  buttonState;
   }
-#endif
-
-  if (sonoff.sw.getEvent() == SWITCH_EVENT_ON) {
-    if (sonoff.relay.isOn()) {
+  if (sonoff.getSwitch().getEvent() == SWITCH_EVENT_ON) {
+    if (sonoff.getRelay().isOn()) {
       switchOff(true);
     }
     else {

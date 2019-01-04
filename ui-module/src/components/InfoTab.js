@@ -3,6 +3,7 @@ import { inject, observer } from 'mobx-react';
 import Table from 'react-bootstrap/lib/Table';
 import Button from 'react-bootstrap/lib/Button';
 import Duration from 'duration';
+import deviceTypeMap from '../utils/deviceTypeMap';
 
 const jsonbuild = process.env.JSON_BUILD;
 
@@ -21,14 +22,15 @@ class InfoTab extends React.Component {
         uptime,
         ssid,
         ip,
-        pow,
         mac,
         versionFirmware,
         deviceType,
+        hostName,
       } = this.props.deviceStateStore;
       let relayState = relay ? 'On' : 'Off';
       relayState = deviceType === 1 ? 'Open' : relayState;
       const json = jsonbuild ? new Date(JSON.parse(jsonbuild).buildDate).toLocaleString() : 'undefined';
+      const dt = deviceTypeMap()[deviceType];
       return (
         <Table striped bordered condensed hover>
           <thead>
@@ -71,12 +73,16 @@ class InfoTab extends React.Component {
               <td>{json}</td>
             </tr>
             <tr>
-              <td>POW</td>
-              <td>{pow}</td>
+              <td>Type</td>
+              <td>{dt}</td>
             </tr>
             <tr>
               <td>Firmware Version</td>
               <td>{versionFirmware}</td>
+            </tr>
+            <tr>
+              <td>hostName</td>
+              <td>{hostName}</td>
             </tr>
             <tr>
               <td>Firmware</td>
