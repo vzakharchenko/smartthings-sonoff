@@ -112,6 +112,18 @@ mappings {
                 POST: "info"
         ]
     }
+    path("/incomingCall") {
+        action:
+        [
+                POST: "incomingCall"
+        ]
+    }
+    path("/endCall") {
+        action:
+        [
+                POST: "endCall"
+        ]
+    }
 }
 
 def init() {
@@ -123,7 +135,7 @@ def init() {
     };
     if (sonoffDevice != null) {
         debug("init: ${json.ip}:${sonoffDevice.getDeviceNetworkId()}:${relay}");
-        sonoffDevice.on();
+        //sonoffDevice.on();
         updateActiveTime(json.mac)
     }
 
@@ -137,11 +149,45 @@ def updateActiveTime(mac) {
     state.sonoffDevicesTimes.put(mac, date.getTime());
 }
 
+def incomingCall() {
+
+    def json = request.JSON;
+    state.sonoffMacDevices.put(json.mac, json.ip);
+    def sonoffDevice = searchDevicesType("Door Shield").find {
+        return it.getDeviceNetworkId() == json.mac
+    };
+    if (sonoffDevice != null) {
+        updateActiveTime(json.mac)
+        sonoffDevice.incommingCall()
+    }
+
+
+    return [status: "OK"]
+
+}
+
+def endCall() {
+
+    def json = request.JSON;
+    state.sonoffMacDevices.put(json.mac, json.ip);
+    def sonoffDevice = searchDevicesType("Door Shield").find {
+        return it.getDeviceNetworkId() == json.mac
+    };
+    if (sonoffDevice != null) {
+        updateActiveTime(json.mac)
+        sonoffDevice.endCall()
+    }
+
+
+    return [status: "OK"]
+
+}
+
 def on() {
 
     def json = request.JSON;
     debug("on: $json")
-    def relay = "undefined";
+    def relay = "on";
     state.sonoffMacDevices.put(json.mac, json.ip);
     def sonoffDevice = searchDevicesType("Door Shield").find {
         return it.getDeviceNetworkId() == json.mac
@@ -255,12 +301,11 @@ def locationHandler(evt) {
     def ip = json.ip;
     def relay = json.relay;
     debug("ip $ip : $relay");
-    def sonoffDevice = searchDevicesType("Virtual Switch").find {
+    def sonoffDevice = searchDevicesType("Door Shield").find {
         return it.getDeviceNetworkId() == json.mac
     };
     if (sonoffDevice != null) {
         updateActiveTime(json.mac)
-        sonoffDevice.on();
     }
 }
 

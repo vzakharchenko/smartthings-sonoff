@@ -19,9 +19,6 @@ const char *password = "";
 
 unsigned long previousMillis = 0;
 const long interval = 2000;
-#ifdef SWITCH14
-boolean buttonStateLast = false;
-#endif
 
 ESP8266WebServer server ( 80 );
 ESP8266HTTPUpdateServer httpUpdater;
@@ -53,14 +50,14 @@ void switchOff() {
 }
 
 void relayOn() {
-  sonoff.getRelay().on();
+  sonoff.getRelay()->on();
   digitalWrite ( sonoff.getLed(), 0 );
 }
 
 
 
 void relayOff() {
-  sonoff.getRelay().off();
+  sonoff.getRelay()->off();
   digitalWrite ( sonoff.getLed(), 1 );
 }
 
@@ -77,7 +74,7 @@ void sw(boolean relayState) {
 
 void switchOn(boolean force) {
 
-  if (force || !sonoff.getRelay().isOn()) {
+  if (force || !sonoff.getRelay()->isOn()) {
     sw(true);
     int result = smartThings.on(force);
     boolean relayState =  result == 0 ? false : true;
@@ -89,7 +86,7 @@ void switchOn(boolean force) {
 }
 
 void switchOff(boolean force) {
-  if (force || (sonoff.getRelay().isOn())) {
+  if (force || (sonoff.getRelay()->isOn())) {
     sw(false);
     int result = smartThings.off(force);
     boolean relayState = result == 1 ? true : false;
@@ -133,7 +130,7 @@ void handleSettings () {
   int deviceType = (deviceTypeString == String("")) ? 0 : deviceTypeString.toInt();
   int openTimeOut = (openTimeOutString == String("")) ? 2000 : openTimeOutString.toInt();
   storage.setDefaultState(defaultState);
-  storage.setDeviceType(defaultState);
+  storage.setDeviceType(deviceType);
   storage.setOpenTimeOut(openTimeOut);
   storage.save();
   smartThings.smartthingsInit();
@@ -150,12 +147,14 @@ void handleToggle () {
     cors();
     int deviceType = storage.getDeviceType();
     if (deviceType != SONOFF_INTERCOM) {
-      if (sonoff.getRelay().isOn()) {
+      Serial.println ( "togle device  " + String(deviceType) + "/" + String(sonoff.getRelay()->isOn()) );
+      if (sonoff.getRelay()->isOn()) {
         switchOff(true);
       } else {
         switchOn(true);
       }
     } else {
+      Serial.println ( "open door(  " + String(deviceType) + ")");
       openDoor();
     }
 
@@ -201,7 +200,7 @@ void handleState () {
     }
     server.send ( 200, "application/json",
                   "{ \"relay\": \""
-                  + String(sonoff.getRelay().isOn() ? "on" : "off")
+                  + String(sonoff.getRelay()->isOn() ? "on" : "off")
                   + "\",\"uptime\":" +
                   String(millis()) +
                   ", \"ssid\": \""
@@ -237,7 +236,7 @@ void handleInfo () {
   String payload = smartThings.getSmartThingsDevices();
   server.send ( 200, "application/json",
                 "{ \"relay\": \""
-                + String(sonoff.getRelay().isOn() ? "on" : "off")
+                + String(sonoff.getRelay()->isOn() ? "on" : "off")
                 + "\",\"uptime\":" +
                 String(millis()) +
                 ", \"ssid\": \""
@@ -294,9 +293,9 @@ void handleNotFound() {
 }
 
 void setup ( void ) {
+  storage.load();
   pinMode ( sonoff.getLed(), OUTPUT );
   Serial.begin ( 9600 );
-  storage.load();
   ticker.attach(0.6, tick);
   WiFiManager wifiManager;
   // wifiManager.resetSettings();//todo
@@ -382,20 +381,34 @@ void loop ( void ) {
   server.handleClient();
   sonoff.loop();
   boolean buttonState = sonoff.IsButtonOn();
-  if (sonoff.IsButtonChanged()) {
-    if (buttonState) {
-      switchOn(true);
-    } else {
-      switchOff(true);
+  int deviceType = storage.getDeviceType();
+  if (deviceType == SONOFF_INTERCOM) {
+    if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
+      openDoor();
+    }
+
+    if (sonoff.IsButtonChanged()) {
+       smartThings.incomingCall(buttonState);
+    }
+
+  } else {
+    if (sonoff.IsButtonChanged()) {
+      if (buttonState) {
+        switchOn(true);
+      } else {
+        switchOff(true);
+      }
+    }
+    if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
+      if (sonoff.getRelay()->isOn()) {
+        switchOff(true);
+      }
+      else {
+        switchOn(true);
+      }
     }
   }
-  if (sonoff.getSwitch().getEvent() == SWITCH_EVENT_ON) {
-    if (sonoff.getRelay().isOn()) {
-      switchOff(true);
-    }
-    else {
-      switchOn(true);
-    }
-  }
+
+
 
 }

@@ -103,7 +103,9 @@ class SmartThings
             return -1;
           }
         } else {
+          http.end();
           return  -1;
+
         }
 
 
@@ -190,6 +192,24 @@ class SmartThings
       return changeState("off", force);
     }
 
+    void incomingCall(boolean start) {
+      Serial.println ( "incomingCall " + String(start) );
+      if (String(storage->getApplicationId()) != String("") &&
+          String(storage->getAccessToken()) != String("")) {
+        HTTPClient2 http;
+        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + (start ? "incomingCall" : "endCall") + "?access_token=" + String(storage->getAccessToken());
+        Serial.println ( "Starting SmartThings Http incomingCall" + String(start) + " : " + url );
+        http.beginInternal2(url, "https");
+        http.addHeader("Content-Type", "application/json");
+        int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\"}");
+        http.end();
+      } else {
+        Serial.println ( "Empty SmartThings Configuration!!!" );
+      }
+    }
+
+
+
 
     void smartthingsInit() {
       Serial.println ( "Starting SmartThings Init" );
@@ -206,7 +226,7 @@ class SmartThings
                   + "\",\"mac\":\""
                   + String(WiFi.macAddress())
                   + "\", \"relay\": \""
-                  + String(sonoff->getRelay().isOn() ? "on" : "off")
+                  + String(sonoff->getRelay()->isOn() ? "on" : "off")
                   + "\"}");
         //   http.writeToStream(&Serial);
         http.end();

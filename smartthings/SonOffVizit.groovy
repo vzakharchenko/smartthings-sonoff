@@ -12,12 +12,17 @@
  *
  */
 metadata {
-    definition (name: "Door Shield", namespace: "smartthings", author: "SmartThings") {
+    definition(name: "Door Shield", namespace: "smartthings", author: "SmartThings") {
         capability "Actuator"
         capability "Sensor"
         capability "Switch"
         capability "Door Control"
         capability "Lock Only"
+
+        attribute "intercom", "String"
+
+        command "incommingCall"
+        command "endCall"
     }
 
     // simulator metadata
@@ -27,7 +32,7 @@ metadata {
     // UI tile definitions
     tiles {
         standardTile("shield", "device.lock", width: 3, height: 2, canChangeBackground: true) {
-            state(name:"locked", label:"open", action:"lock", icon:"st.locks.lock.unlocked", backgroundColor:"#00A0DC")
+            state(name: "locked", label: "open", action: "lock", icon: "st.locks.lock.unlocked", backgroundColor: "#00A0DC")
         }
 
         main "shield"
@@ -56,4 +61,12 @@ def on() {
 }
 
 def off() {
+}
+
+def incommingCall() {
+    sendEvent(name: "intercom", value: "calling")
+}
+
+def endCall() {
+    sendEvent(name: "intercom", value: "end")
 }

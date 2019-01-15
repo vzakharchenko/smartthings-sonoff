@@ -51,7 +51,7 @@ class Sonoff
     }
 
     void setup() {
-      if (this->storage->getDeviceType() == SONOFF_BASIC_GPIO14) {
+      if (this->storage->getDeviceType() == SONOFF_BASIC_GPIO14 || this->storage->getDeviceType() == SONOFF_INTERCOM ) {
         pinMode(D5, INPUT);
       }
     }
@@ -67,7 +67,7 @@ class Sonoff
     }
 
     boolean IsButtonOn() {
-      if (this->storage->getDeviceType() == SONOFF_BASIC_GPIO14) {
+      if (this->storage->getDeviceType() == SONOFF_BASIC_GPIO14 || this->storage->getDeviceType() == SONOFF_INTERCOM ) {
         remoteButtonState = digitalRead(D5);
         return !(remoteButtonState == HIGH);
       } else {
@@ -75,12 +75,12 @@ class Sonoff
       }
     }
 
-    Relay getRelay() {
-      return Relay(*this->relay);
+    Relay* getRelay() {
+      return this->relay;
     }
 
-    Switch getSwitch() {
-      return Switch(*this->sw);
+    Switch* getSwitch() {
+      return this->sw;
     }
 
     uint8_t getLed() {
