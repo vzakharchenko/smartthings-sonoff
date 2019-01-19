@@ -26,6 +26,8 @@ export class DeviceStateStore {
 
     @observable smartthingsStatus = '';
 
+    @observable smartthingsIntercomStatus = '';
+
     @observable smartthingsDevices = null;
 
     @observable versionFirmware = '';
@@ -37,6 +39,8 @@ export class DeviceStateStore {
     @observable deviceType = 0;
 
     @observable openTimeOut = 2000;
+
+    @observable intercomCallTimeout = 2000;
 
     @observable isLoading = false;
 
@@ -97,12 +101,14 @@ export class DeviceStateStore {
       this.smartThingsUrl = res.smartThingsUrl;
       this.smartthingsName = res.smartthings.name;
       this.smartthingsStatus = res.smartthings.status;
+      this.smartthingsIntercomStatus = res.smartthings.intercom;
       this.smartthingsDevices = res.smartthings.devices.devices;
       this.defaultState = res.defaultState;
       this.deviceType = res.deviceType;
       this.openTimeOut = res.openTimeOut;
       this.versionFirmware = res.versionFirmware;
       this.hostName = res.hostName;
+      this.intercomCallTimeout = res.intercomCallTimeout;
       this.validationForm();
     }
 
@@ -148,7 +154,7 @@ export class DeviceStateStore {
       if (this.deviceType === 1 || this.deviceType === '1') {
         this.defaultState = 1;
       }
-      const postData = `applicationId=${encodeURIComponent(this.applicationId)}&accessToken=${encodeURIComponent(this.accessToken)}&smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}&deviceType=${this.deviceType}&openTimeOut=${this.openTimeOut}&defaultState=${this.defaultState}`;
+      const postData = `applicationId=${encodeURIComponent(this.applicationId)}&accessToken=${encodeURIComponent(this.accessToken)}&smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}&deviceType=${this.deviceType}&openTimeOut=${this.openTimeOut}&defaultState=${this.defaultState}&intercomCallTimeout=${this.intercomCallTimeout}`;
 
       sendData(`${serverUrl}config`, 'POST', postData, {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,application/json,*/*;q=0.8',

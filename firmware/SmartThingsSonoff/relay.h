@@ -71,4 +71,3 @@ class Relay
 
 };
 #endif /* relay_h */
-

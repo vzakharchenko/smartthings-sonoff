@@ -8,12 +8,14 @@ export default
 @observer
 class SmartThingsTab extends React.Component {
   render() {
-    const { smartthingsName, smartthingsStatus, deviceType } = this.props.deviceStateStore;
+    const {
+      smartthingsName, smartthingsStatus, smartthingsIntercomStatus, deviceType,
+    } = this.props.deviceStateStore;
     let statusString = 'Switch Status';
     let smartthingsStatusString = smartthingsStatus;
     if (deviceType === 1) {
       statusString = 'Door Status';
-      smartthingsStatusString = smartthingsStatus === 'on' ? 'OK' : 'Failed';
+      smartthingsStatusString = smartthingsIntercomStatus === 'end' ? 'Waiting' : 'Calling';
     }
     return (
       <Table striped bordered condensed hover>

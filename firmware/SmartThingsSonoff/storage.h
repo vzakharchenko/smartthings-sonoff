@@ -15,17 +15,6 @@ class Storage
     typedef struct
     {
       byte package;
-      char smartThingsUrl[128];
-      char applicationId[128];
-      char accessToken[128];
-      int  defaultState;
-      bool  lastState;
-      char signature[3];
-    } Configuration12;
-
-    typedef struct
-    {
-      byte package;
       int storageVersion;
       char smartThingsUrl[128];
       char applicationId[128];
@@ -49,9 +38,24 @@ class Storage
       char signature[3];
     } Configuration13102;
 
-    Configuration13102 configuration {
+    typedef struct
+    {
+      byte package;
+      int storageVersion;
+      char smartThingsUrl[128];
+      char applicationId[128];
+      char accessToken[128];
+      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      bool  lastState;// last state of relay
+      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
+      int openTimeOut; // open door timeoutVizit intercom()
+      int intercomCallTimeout; // incomming call  timeout Vizit intercom()
+      char signature[3];
+    } Configuration13103;
+
+    Configuration13103 configuration {
       13,
-      102,
+      103,
       "",
       "",
       "",
@@ -59,6 +63,7 @@ class Storage
       false,
       0,
       2000,
+      4000,
       "OK"
     };
 
@@ -107,31 +112,7 @@ class Storage
       boolean packageVersion = 0;
       loadStruct(&packageVersion,  1);
       Serial.println ( "package version " + String(packageVersion) );
-      if (packageVersion == 12) {
-
-        Configuration12 readConfiguration{
-          12,
-          "",
-          "",
-          "",
-          0,
-          false,
-          "BD"
-        };
-        loadStruct(&readConfiguration, sizeof(readConfiguration));
-        Serial.println ( "Storage loaded" );
-        if (String(readConfiguration.signature) == String("OK")) {
-          Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
-          strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
-          strcpy(configuration.applicationId, readConfiguration.applicationId);
-          strcpy(configuration.accessToken, readConfiguration.accessToken);
-          configuration.defaultState = readConfiguration.defaultState;
-          configuration.lastState = readConfiguration.lastState;
-          save();
-        } else {
-          Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
-        }
-      } else if (packageVersion = 13) {
+      if (packageVersion = 13) {
         ConfigurationVersion configurationVersion;
         loadStruct(&configurationVersion, sizeof(configurationVersion));
         int storageVersion = configurationVersion.storageVersion;
@@ -172,6 +153,36 @@ class Storage
             false,
             0,
             2000,
+            "BD"
+          };
+          loadStruct(&readConfiguration, sizeof(readConfiguration));
+          Serial.println ( "Storage loaded" );
+          if (String(readConfiguration.signature) == String("OK")) {
+            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
+            strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
+            strcpy(configuration.applicationId, readConfiguration.applicationId);
+            strcpy(configuration.accessToken, readConfiguration.accessToken);
+            configuration.defaultState = readConfiguration.defaultState;
+            configuration.lastState = readConfiguration.lastState;
+            configuration.deviceType = readConfiguration.deviceType;
+            configuration.openTimeOut = readConfiguration.openTimeOut;
+            save();
+          } else {
+            Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
+          }
+        }
+        if (storageVersion == 103) {
+          Configuration13103 readConfiguration {
+            13,
+            103,
+            "",
+            "",
+            "",
+            0,
+            false,
+            0,
+            2000,
+            4000,
             "BD"
           };
           loadStruct(&readConfiguration, sizeof(readConfiguration));
@@ -255,6 +266,14 @@ class Storage
 
     int setOpenTimeOut(int timeOut) {
       configuration.openTimeOut = timeOut;
+    }
+
+    int getIntercomCallTimeout() {
+      return configuration.intercomCallTimeout;
+    }
+
+    int setIntercomCallTimeout(int intercomCallTimeout) {
+      configuration.intercomCallTimeout = intercomCallTimeout;
     }
 
 

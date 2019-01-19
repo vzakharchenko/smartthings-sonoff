@@ -38,6 +38,7 @@ class ConfigurationTab extends React.Component {
         isValid,
         deviceType,
         openTimeOut,
+        intercomCallTimeout,
       } = this.props.deviceStateStore;
       return (
         <form>
@@ -142,19 +143,34 @@ class ConfigurationTab extends React.Component {
             </FormGroup>
           ) : null}
           {parseInt(deviceType, 10) === 1 ? (
-            <FormGroup
-              controlId="openTimeOut"
-            >
-              <ControlLabel>SmartThings Open Door TimeOut</ControlLabel>
-              <FormControl
-                type="number"
-                name="openTimeOut"
-                value={openTimeOut}
-                placeholder="open Door TimeOut"
-                onChange={this.handleChangeState}
-              />
-              <FormControl.Feedback />
-            </FormGroup>
+            <div>
+              <FormGroup
+                controlId="openTimeOut"
+              >
+                <ControlLabel>Open Door TimeOut</ControlLabel>
+                <FormControl
+                  type="number"
+                  name="openTimeOut"
+                  value={openTimeOut}
+                  placeholder="open Door TimeOut"
+                  onChange={this.handleChangeState}
+                />
+                <FormControl.Feedback />
+              </FormGroup>
+              <FormGroup
+                controlId="intercomCallTimeout"
+              >
+                <ControlLabel>Calling Door TimeOut</ControlLabel>
+                <FormControl
+                  type="number"
+                  name="intercomCallTimeout"
+                  value={intercomCallTimeout}
+                  placeholder="Calling Door TimeOut"
+                  onChange={this.handleChangeState}
+                />
+                <FormControl.Feedback />
+              </FormGroup>
+            </div>
           ) : null
             }
 

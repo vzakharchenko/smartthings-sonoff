@@ -7,7 +7,7 @@ static const uint8_t SWITCH_EVENT_ON = 2;
 
 /*
    We will check the switch every debounce_intervall_ms.
-   If the logic value stays debounce_count times at a differnt level than the current one 
+   If the logic value stays debounce_count times at a differnt level than the current one
    an event is triggered and the new state is stored.
 */
 
@@ -29,7 +29,7 @@ class Switch
     uint8_t debounce_count;
 
     uint8_t pin;
-    
+
     uint8_t event = SWITCH_EVENT_IDLE;
 
   public:
@@ -64,7 +64,7 @@ class Switch
         time_to_check_switch = millis() + debounce_intervall_ms;
 
         switch (state) {
-          
+
           case SWITCH_STATE_OFF:
             if ((digitalRead(pin) == HIGH && polarity == true) || (digitalRead(pin) == LOW && polarity == false) ) {
               debounce_counter++;
@@ -78,9 +78,9 @@ class Switch
               debounce_counter = 0;
             }
             break;
-            
+
           case SWITCH_STATE_ON:
-          
+
             if ((digitalRead(pin) == LOW && polarity == true) || (digitalRead(pin) == HIGH && polarity == false) ) {
               debounce_counter++;
               if (debounce_counter >= debounce_count) {
@@ -93,11 +93,10 @@ class Switch
               debounce_counter = 0;
             }
             break;
-            
+
         }
       }
     }
 };
 
 #endif /* switch_h */
-

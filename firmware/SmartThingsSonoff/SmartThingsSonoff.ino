@@ -123,15 +123,18 @@ void handleSettings () {
   String defaultStateString = server.arg("defaultState");
   String deviceTypeString = server.arg("deviceType");
   String openTimeOutString = server.arg("openTimeOut");
+  String intercomCallTimeoutString = server.arg("intercomCallTimeout");
   storage.setSmartThingsUrl(smartThingsUrl);
   storage.setApplicationId(applicationId);
   storage.setAccessToken(accessToken);
   int defaultState = (defaultStateString == String("")) ? 0 : defaultStateString.toInt();
   int deviceType = (deviceTypeString == String("")) ? 0 : deviceTypeString.toInt();
   int openTimeOut = (openTimeOutString == String("")) ? 2000 : openTimeOutString.toInt();
+  int intercomCallTimeout = (intercomCallTimeoutString == String("")) ? 4000 : intercomCallTimeoutString.toInt();
   storage.setDefaultState(defaultState);
   storage.setDeviceType(deviceType);
   storage.setOpenTimeOut(openTimeOut);
+  storage.setIntercomCallTimeout(intercomCallTimeout);
   storage.save();
   smartThings.smartthingsInit();
   handleInfo();
@@ -259,6 +262,8 @@ void handleInfo () {
                 + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
                 + "\", \"openTimeOut\":"
                 + String(storage.getOpenTimeOut())
+                + ", \"intercomCallTimeout\":"
+                + String(storage.getIntercomCallTimeout())
                 + ", \"deviceType\":"
                 + String(storage.getDeviceType())
                 + ", \"defaultState\":"
@@ -385,10 +390,10 @@ void loop ( void ) {
   if (deviceType == SONOFF_INTERCOM) {
     if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
       openDoor();
-    }
+    } 
 
     if (sonoff.IsButtonChanged()) {
-       smartThings.incomingCall(buttonState);
+      smartThings.incomingCall(buttonState);
     }
 
   } else {

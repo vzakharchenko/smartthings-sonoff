@@ -31,6 +31,7 @@ class Sonoff
     Storage* storage;
     boolean remoteButtonState = false;
     boolean remoteButtonStateLast = false;
+    unsigned long remoteButtonStateTime = millis();
     Relay* relay;
     Switch* sw;
 
@@ -60,8 +61,21 @@ class Sonoff
     boolean IsButtonChanged() {
       boolean buttonState = IsButtonOn();
       if (remoteButtonStateLast != buttonState ) {
-        remoteButtonStateLast =  buttonState;
-        return true;
+        if (this->storage->getDeviceType() == SONOFF_INTERCOM) {
+          unsigned long remoteButtonCurrentStateTime = millis();
+          if ((remoteButtonCurrentStateTime - remoteButtonStateTime) > (storage->getIntercomCallTimeout())) {
+            remoteButtonStateLast =  buttonState;
+            remoteButtonStateTime = millis();
+            return true;
+          } else {
+             remoteButtonStateTime = millis(); 
+            return false;
+          }
+        } else {
+          remoteButtonStateLast =  buttonState;
+          remoteButtonStateTime = millis();
+          return true;
+        }
       }
       return false;
     }
