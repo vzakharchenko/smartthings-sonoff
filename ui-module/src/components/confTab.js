@@ -39,6 +39,7 @@ class ConfigurationTab extends React.Component {
         deviceType,
         openTimeOut,
         intercomCallTimeout,
+        gpio14State,
       } = this.props.deviceStateStore;
       return (
         <form>
@@ -173,7 +174,28 @@ class ConfigurationTab extends React.Component {
             </div>
           ) : null
             }
-
+          {parseInt(deviceType, 10) === 1 || parseInt(deviceType, 10) === 2
+            ? (
+              <dev>
+                <FormGroup
+                  controlId="gpio14State"
+                >
+                  <ControlLabel>Default Switch Value</ControlLabel>
+                  <FormControl
+                    componentClass="select"
+                    placeholder="SWITCH State"
+                    name="gpio14State"
+                    defaultValue={gpio14State}
+                    onChange={this.handleChangeState}
+                  >
+                    <option value="0">LOW</option>
+                    <option value="1">HIGH</option>
+                  </FormControl>
+                  <FormControl.Feedback />
+                </FormGroup>
+              </dev>
+            )
+            : null}
           <Button
             bsStyle="primary"
             disabled={isSaving || !isValid}

@@ -38,6 +38,8 @@ export class DeviceStateStore {
 
     @observable deviceType = 0;
 
+    @observable gpio14State = 0;
+
     @observable openTimeOut = 2000;
 
     @observable intercomCallTimeout = 2000;
@@ -86,6 +88,10 @@ export class DeviceStateStore {
         isValid = false;
       }
 
+      if (this.gpio14State !== 1 || this.gpio14State !== 0) {
+        isValid = false;
+      }
+
       this.isValid = isValid;
     }
 
@@ -104,6 +110,7 @@ export class DeviceStateStore {
       this.smartthingsIntercomStatus = res.smartthings.intercom;
       this.smartthingsDevices = res.smartthings.devices.devices;
       this.defaultState = res.defaultState;
+      this.gpio14State = res.gpio14State;
       this.deviceType = res.deviceType;
       this.openTimeOut = res.openTimeOut;
       this.versionFirmware = res.versionFirmware;
@@ -154,7 +161,7 @@ export class DeviceStateStore {
       if (this.deviceType === 1 || this.deviceType === '1') {
         this.defaultState = 1;
       }
-      const postData = `applicationId=${encodeURIComponent(this.applicationId)}&accessToken=${encodeURIComponent(this.accessToken)}&smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}&deviceType=${this.deviceType}&openTimeOut=${this.openTimeOut}&defaultState=${this.defaultState}&intercomCallTimeout=${this.intercomCallTimeout}`;
+      const postData = `applicationId=${encodeURIComponent(this.applicationId)}&accessToken=${encodeURIComponent(this.accessToken)}&smartThingsUrl=${encodeURIComponent(this.smartThingsUrl)}&deviceType=${this.deviceType}&openTimeOut=${this.openTimeOut}&defaultState=${this.defaultState}&intercomCallTimeout=${this.intercomCallTimeout}&gpio14State=${this.gpio14State}`;
 
       sendData(`${serverUrl}config`, 'POST', postData, {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,application/json,*/*;q=0.8',

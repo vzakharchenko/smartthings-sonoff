@@ -83,7 +83,7 @@ class Sonoff
     boolean IsButtonOn() {
       if (this->storage->getDeviceType() == SONOFF_BASIC_GPIO14 || this->storage->getDeviceType() == SONOFF_INTERCOM ) {
         remoteButtonState = digitalRead(D5);
-        return !(remoteButtonState == HIGH);
+        return remoteButtonState == this->storage-> getGpio14State();
       } else {
         return false;
       }

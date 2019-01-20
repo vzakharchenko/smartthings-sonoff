@@ -53,9 +53,25 @@ class Storage
       char signature[3];
     } Configuration13103;
 
-    Configuration13103 configuration {
+    typedef struct
+    {
+      byte package;
+      int storageVersion;
+      char smartThingsUrl[128];
+      char applicationId[128];
+      char accessToken[128];
+      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      bool  lastState;// last state of relay
+      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
+      int openTimeOut; // open door timeoutVizit intercom()
+      int intercomCallTimeout; // incomming call  timeout Vizit intercom()
+      int gpio14State;
+      char signature[3];
+    } Configuration13104;
+
+    Configuration13104 configuration {
       13,
-      103,
+      104,
       "",
       "",
       "",
@@ -64,6 +80,7 @@ class Storage
       0,
       2000,
       4000,
+      LOW,
       "OK"
     };
 
@@ -189,6 +206,38 @@ class Storage
           Serial.println ( "Storage loaded" );
           if (String(readConfiguration.signature) == String("OK")) {
             Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
+            strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
+            strcpy(configuration.applicationId, readConfiguration.applicationId);
+            strcpy(configuration.accessToken, readConfiguration.accessToken);
+            configuration.defaultState = readConfiguration.defaultState;
+            configuration.lastState = readConfiguration.lastState;
+            configuration.deviceType = readConfiguration.deviceType;
+            configuration.openTimeOut = readConfiguration.openTimeOut;
+            configuration.intercomCallTimeout = readConfiguration.intercomCallTimeout;
+            save();
+          } else {
+            Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
+          }
+        }
+        if (storageVersion == 104) {
+          Configuration13104 readConfiguration {
+            13,
+            104,
+            "",
+            "",
+            "",
+            0,
+            false,
+            0,
+            2000,
+            4000,
+            LOW,
+            "BD"
+          };
+          loadStruct(&readConfiguration, sizeof(readConfiguration));
+          Serial.println ( "Storage loaded" );
+          if (String(readConfiguration.signature) == String("OK")) {
+            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
             this->configuration = readConfiguration;
           } else {
             Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
@@ -276,5 +325,12 @@ class Storage
       configuration.intercomCallTimeout = intercomCallTimeout;
     }
 
+    int getGpio14State() {
+      return configuration.gpio14State;
+    }
+
+    int setGpio14State(int gpio14State) {
+      configuration.gpio14State = gpio14State == LOW ? LOW : HIGH;
+    }
 
 };

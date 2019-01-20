@@ -124,6 +124,7 @@ void handleSettings () {
   String deviceTypeString = server.arg("deviceType");
   String openTimeOutString = server.arg("openTimeOut");
   String intercomCallTimeoutString = server.arg("intercomCallTimeout");
+  String gpio14StateString = server.arg("gpio14State");
   storage.setSmartThingsUrl(smartThingsUrl);
   storage.setApplicationId(applicationId);
   storage.setAccessToken(accessToken);
@@ -131,10 +132,12 @@ void handleSettings () {
   int deviceType = (deviceTypeString == String("")) ? 0 : deviceTypeString.toInt();
   int openTimeOut = (openTimeOutString == String("")) ? 2000 : openTimeOutString.toInt();
   int intercomCallTimeout = (intercomCallTimeoutString == String("")) ? 4000 : intercomCallTimeoutString.toInt();
+  int gpio14State = (gpio14StateString == String("")) ? LOW : gpio14StateString.toInt();
   storage.setDefaultState(defaultState);
   storage.setDeviceType(deviceType);
   storage.setOpenTimeOut(openTimeOut);
   storage.setIntercomCallTimeout(intercomCallTimeout);
+  storage.setGpio14State(gpio14State);
   storage.save();
   smartThings.smartthingsInit();
   handleInfo();
@@ -262,6 +265,8 @@ void handleInfo () {
                 + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
                 + "\", \"openTimeOut\":"
                 + String(storage.getOpenTimeOut())
+                + ", \"gpio14State\":"
+                + String(storage.getGpio14State())
                 + ", \"intercomCallTimeout\":"
                 + String(storage.getIntercomCallTimeout())
                 + ", \"deviceType\":"
@@ -393,6 +398,7 @@ void loop ( void ) {
     } 
 
     if (sonoff.IsButtonChanged()) {
+      delay(50);
       smartThings.incomingCall(buttonState);
     }
 
