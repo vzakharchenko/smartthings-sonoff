@@ -88,10 +88,6 @@ export class DeviceStateStore {
         isValid = false;
       }
 
-      if (this.gpio14State !== 1 || this.gpio14State !== 0) {
-        isValid = false;
-      }
-
       this.isValid = isValid;
     }
 
