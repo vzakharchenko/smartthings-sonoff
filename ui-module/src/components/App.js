@@ -22,18 +22,24 @@ class App extends React.Component {
     return (
       <Panel>
         <Panel.Heading>
+          {
+                !isLoading
+                  ? (
+                    <Image
+                      src={`${staticServerUrl}${deviceType}.jpg`}
+                      style={{
+                        maxWidth: '20%',
+                        height: 'auto',
+                        display: 'block',
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
+                        width: '50%',
+                      }}
+                    />
+                  )
+                  : null
+            }
 
-          <Image
-            src={`${staticServerUrl}${deviceType}.jpg`}
-            style={{
-              maxWidth: '20%',
-              height: 'auto',
-              display: 'block',
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              width: '50%',
-            }}
-          />
 
         </Panel.Heading>
         <Panel.Body style={{
