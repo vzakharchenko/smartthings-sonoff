@@ -269,6 +269,7 @@ def locationHandler(evt) {
         }
         def ip = convertHexToIP(parsedEvent.ip)
         state.sonoffMacDevices.put(modifyMac(parsedEvent.mac), ip);
+        checkSonOff(parsedEvent);
     }
 
 }
@@ -285,21 +286,6 @@ def checkSonOff(parsedEvent) {
         device.setIp(parsedEvent.ip);
         device.setPort(parsedEvent.port);
         state.sonoffDevicesTimes.put(modifyMac(parsedEvent.mac), curTime)
-    }
-
-
-    devices.each {
-        def mac = it.getDeviceNetworkId();
-        def ip = state.sonoffMacDevices.get(mac);
-        def activeDate = state.sonoffDevicesTimes.get(mac);
-        if ((curTime - timeout) > activeDate) {
-            it.setOffline();
-            it.markDeviceOffline();
-            debug("ip ${ip} offline ${curTime - timeout} > ${activeDate} ")
-        } else {
-            it.markDeviceOnline();
-            debug("ip ${ip} online ${curTime - timeout} < ${activeDate} ")
-        }
     }
 }
 
@@ -412,7 +398,25 @@ def searchDevicesType(devType) {
 
 def healthCheck() {
     ssdpDiscover();
+    def timeout = 1000 * 60 * 30;
+    def curTime = new Date().getTime();
 
+    def devices = searchDevicesType("Sonoff Switch");
+
+
+    devices.each {
+        def mac = it.getDeviceNetworkId();
+        def ip = state.sonoffMacDevices.get(mac);
+        def activeDate = state.sonoffDevicesTimes.get(mac);
+        if ((curTime - timeout) > activeDate) {
+            it.setOffline();
+            it.markDeviceOffline();
+            debug("ip ${ip} offline ${curTime - timeout} > ${activeDate} ")
+        } else {
+            it.markDeviceOnline();
+            debug("ip ${ip} online ${curTime - timeout} < ${activeDate} ")
+        }
+    }
 }
 /*
 def locationHandler(evt) {
@@ -435,24 +439,6 @@ def locationHandler(evt) {
         }
     }
 }*/
-
-def switchOnHandler(evt) {
-    def mac = evt.getDevice().getDeviceNetworkId();
-    def ip = state.sonoffMacDevices.get(mac);
-    runIn(1, "switchHandler", [data: [ip: ip, mode: "on"], overwrite: true])
-}
-
-def switchOffHandler(evt) {
-    def mac = evt.getDevice().getDeviceNetworkId();
-    def ip = state.sonoffMacDevices.get(mac);
-    runIn(1, "switchHandler", [data: [ip: ip, mode: "off"], overwrite: true])
-}
-
-def switchHandler(data) {
-    debug("switchHandler = ${data}")
-    def ip = data.ip;
-    apiGet(ip, 80, data.mode, [])
-}
 
 def apiGet(ip, port, path, query) {
     def url = "${ip}:${port}";
