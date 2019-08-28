@@ -9,39 +9,43 @@ integration smartthings and sonoff devices
   
 ## install custom DHT Source
   1. open https://graph.api.smartthings.com/location/list with your samsung account 
-  2. select your location <Location.png>
-  3. open "My Device Handlers"  and click "create new Device Handler" <Device Handlers.png>
-  4. select "From Code" insert code from  https://raw.githubusercontent.com/vzakharchenko/smartthings-sonoff/master/smartthings/devices/Sonoff%20Switch.groovy <New Device Handler .png>
+  2. select your location ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/Location.png?raw=true)
+  3. open "My Device Handlers"  and click "create new Device Handler" ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/Device%20Handlers.png?raw=true)
+  4. select "From Code" insert code from  https://raw.githubusercontent.com/vzakharchenko/smartthings-sonoff/master/smartthings/devices/Sonoff%20Switch.groovy ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/New%20Device%20Handler%20.png?raw=true)
   
   
 ## install SmartApp from Source
   1. open https://graph.api.smartthings.com/location/list with your samsung account
-  2.. select your location <Location.png>
-  3. add new smartapp  <addNewSmartApp.png>
+  2.. select your location  ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/Location.png?raw=true)
+  3. add new smartapp  ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/addNewSmartApp.png?raw=true)
   4. select "From Code" insert code from https://raw.githubusercontent.com/vzakharchenko/smartthings-sonoff/master/smartthings/smartapps/SonOff%20devices.groovy
-  <New SmartApp.png>
+![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/New%20SmartApp.png?raw=true)
   
-  5. open App-Setting <App Settings.png>
-  6. enable oauth in smartapp <enableOAuth.png>
-  7.  save and publish <saveAndPublish.png>
+  5. open App-Setting ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/App%20Settings.png?raw=true)
+  6. enable oauth in smartapp ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/enableOAuth.png?raw=true)
+  7.  save and publish ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/saveAndPublish.png?raw=true)
   
 
 ## Configure in SmartThings Classic
   1. open SmartThings Classic
-  2. open "Automation" Tab->"SmartApps" -> "add SmartApp" and select "My app" category.   <addSmartApp.png>
-  3. add "SonOff devices" <SonOffDevices.png>
-  4. wait until your devices will be available <SonOffDevices.png>
-  5. select devices and click save <selectDevices.png>
-  6. check for a new device Sonoff(<MAC>)
+  2. open "Automation" Tab->"SmartApps" -> "add SmartApp" and select "My app" category.   ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/addSmartApp.png?raw=true)
+  3. add "SonOff devices" ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/SonOffDevices.png?raw=true)
+  4. wait until your devices will be available 
+  5. select devices and click save ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/selectDevices.png?raw=true)
+
 
 ## Configure device
-  1. open device <selectDevice.png>
-  2. configure device <configureDevice.png>
+  1. open device ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/selectDevice.png?raw=true)
+  2. configure device ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/configureDevice.png?raw=true)
   3. change name , select type or  power state at startup
-  <ConfigureDevicePage.png>
+ ![](https://github.com/vzakharchenko/smartthings-sonoff/blob/master/img/ConfigureDevicePage.png?raw=true)
   
 ##  Power states after booting device
+
   **Off** - start sonoff with relay off 
+  
   **On** - start sonoff with relay on
+  
   **Latest** - start sonoff with the latest state of ralay
+  
   **SmartThings** - start sonoff with the  state from the SmartThings device
