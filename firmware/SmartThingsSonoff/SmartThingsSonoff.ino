@@ -9,18 +9,20 @@
 #include <ArduinoOTA.h>
 #include <WiFiManager.h>
 #include <Ticker.h>
+#include <ESP8266SSDP.h>
 #include "storage.h"
 #include "Sonoff.h"
 #include "SamsungSmartThings.h"
-#include "index.h"
 
 const char *ssid = "";
 const char *password = "";
 
+const String ssdpDeviceType = "urn:sonoff:device:vzakharchenko:1";
+
 unsigned long previousMillis = 0;
 const long interval = 2000;
 
-ESP8266WebServer server ( 80 );
+ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
 
@@ -76,25 +78,16 @@ void switchOn(boolean force) {
 
   if (force || !sonoff.getRelay()->isOn()) {
     sw(true);
-    int result = smartThings.on(force);
-    boolean relayState =  result == 0 ? false : true;
-    if (!force) {
-      sw(relayState);
-    }
   }
+  smartThings.on(force);
 
 }
 
 void switchOff(boolean force) {
   if (force || (sonoff.getRelay()->isOn())) {
     sw(false);
-    int result = smartThings.off(force);
-    boolean relayState = result == 1 ? true : false;
-    if (!force) {
-      sw(relayState);
-    }
-
   }
+  smartThings.off(force);
 }
 
 int getSwitchState() {
@@ -117,7 +110,7 @@ void cors () {
 }
 
 void handleSettings () {
-  String smartThingsUrl = server.arg("smartThingsUrl");
+  //String smartThingsUrl = server.arg("smartThingsUrl");
   String applicationId = server.arg("applicationId");
   String accessToken = server.arg("accessToken");
   String defaultStateString = server.arg("defaultState");
@@ -125,47 +118,41 @@ void handleSettings () {
   String openTimeOutString = server.arg("openTimeOut");
   String intercomCallTimeoutString = server.arg("intercomCallTimeout");
   String gpio14StateString = server.arg("gpio14State");
-  storage.setSmartThingsUrl(smartThingsUrl);
-  storage.setApplicationId(applicationId);
-  storage.setAccessToken(accessToken);
-  int defaultState = (defaultStateString == String("")) ? 0 : defaultStateString.toInt();
-  int deviceType = (deviceTypeString == String("")) ? 0 : deviceTypeString.toInt();
-  int openTimeOut = (openTimeOutString == String("")) ? 2000 : openTimeOutString.toInt();
-  int intercomCallTimeout = (intercomCallTimeoutString == String("")) ? 4000 : intercomCallTimeoutString.toInt();
-  int gpio14State = (gpio14StateString == String("")) ? LOW : gpio14StateString.toInt();
-  storage.setDefaultState(defaultState);
-  storage.setDeviceType(deviceType);
-  storage.setOpenTimeOut(openTimeOut);
-  storage.setIntercomCallTimeout(intercomCallTimeout);
-  storage.setGpio14State(gpio14State);
+  if (applicationId != String("")) {
+    storage.setApplicationId(applicationId);
+  }
+  if (accessToken != String("")) {
+    storage.setAccessToken(accessToken);
+  }
+
+  if (defaultStateString != String("")) {
+    int defaultState = defaultStateString.toInt();
+    storage.setDefaultState(defaultState);
+  }
+  if (deviceTypeString != String("")) {
+    int value = deviceTypeString.toInt();
+    storage.setDeviceType(value);
+  }
+  if (openTimeOutString != String("")) {
+    int value = openTimeOutString.toInt();
+    storage.setOpenTimeOut(value);
+  }
+  if (intercomCallTimeoutString != String("")) {
+    int value = intercomCallTimeoutString.toInt();
+    storage.setIntercomCallTimeout(value);
+  }
+  if (gpio14StateString != String("")) {
+    int value = gpio14StateString.toInt();
+    storage.setGpio14State(value);
+  }
+
   storage.save();
   smartThings.smartthingsInit();
   handleInfo();
 }
 
-void handleToggle () {
-  if (server.method() == HTTP_OPTIONS)
-  {
-    cors();
-
-    server.send(204);
-  } else {
-    cors();
-    int deviceType = storage.getDeviceType();
-    if (deviceType != SONOFF_INTERCOM) {
-      Serial.println ( "togle device  " + String(deviceType) + "/" + String(sonoff.getRelay()->isOn()) );
-      if (sonoff.getRelay()->isOn()) {
-        switchOff(true);
-      } else {
-        switchOn(true);
-      }
-    } else {
-      Serial.println ( "open door(  " + String(deviceType) + ")");
-      openDoor();
-    }
-
-    handleInfo();
-  }
+void handleDescription() {
+  SSDP.schema(server.client());
 }
 
 void handleOn () {
@@ -185,58 +172,6 @@ void handleOff () {
   server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\"  }" );
 }
 
-void handleReset() {
-  server.send ( 200, "application/json", "{ \"Status\":\"OK\" ,\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\"  }" );
-  ESP.reset();
-}
-
-void handleState () {
-  if (server.method() == HTTP_OPTIONS)
-  {
-    cors();
-    server.send(204);
-  } else {
-    cors();
-    SmartThingDevice std = smartThings.getSmartThingsDevice();
-    String devStatus = "undefined";
-    if (std.state == 0) {
-      devStatus = "off";
-    } else {
-      devStatus = "on";
-    }
-    server.send ( 200, "application/json",
-                  "{ \"relay\": \""
-                  + String(sonoff.getRelay()->isOn() ? "on" : "off")
-                  + "\",\"uptime\":" +
-                  String(millis()) +
-                  ", \"ssid\": \""
-                  + WiFi.SSID() +
-                  "\", \"hostName\": \""
-                  + WiFi.hostname() +
-                  "\",\"ip\":\""
-                  + IpAddress2String( WiFi.localIP())
-                  + "\", \"mac\":\""
-                  + String(WiFi.macAddress())
-                  + "\", \"applicationId\":\""
-                  + String(storage.getApplicationId())
-                  + "\", \"accessToken\":\""
-                  + String(storage.getAccessToken())
-                  + "\", \"smartThingsUrl\":\""
-                  + String(storage.getSmartThingsUrl())
-                  + "\", \"smartthingsName\":\""
-                  + String(std.devName)
-                  + "\", \"versionFirmware\":\""
-                  + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
-                  + "\", \"smartthingsStatus\":\""
-                  + devStatus
-                  + "\", \"deviceType\":"
-                  + String(storage.getDeviceType())
-                  + ",  \"defaultState\":"
-                  + String(storage.getDefaultState())
-                  + " }");
-  }
-}
-
 void handleInfo () {
 
   String payload = smartThings.getSmartThingsDevices();
@@ -253,15 +188,17 @@ void handleInfo () {
                 + IpAddress2String( WiFi.localIP())
                 + "\", \"mac\":\""
                 + String(WiFi.macAddress())
-                + "\", \"applicationId\":\""
-                + String(storage.getApplicationId())
-                + "\", \"accessToken\":\""
-                + String(storage.getAccessToken())
-                + "\", \"smartThingsUrl\":\""
-                + String(storage.getSmartThingsUrl())
+                //                + "\", \"applicationId\":\""
+                //                + String(storage.getApplicationId())
+                //                + "\", \"accessToken\":\""
+                //                + String(storage.getAccessToken())
+                //                + "\", \"smartThingsUrl\":\""
+                //                + String(storage.getSmartThingsUrl())
                 + "\", \"smartthings\":"
                 + String(payload)
-                + ", \"versionFirmware\":\""
+                + ", \"buttonState\":\""
+                + String(sonoff.IsButtonOn())
+                + "\", \"versionFirmware\":\""
                 + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
                 + "\", \"openTimeOut\":"
                 + String(storage.getOpenTimeOut())
@@ -276,13 +213,9 @@ void handleInfo () {
                 + " }");
 }
 
-void handleinit () {
-  smartThings.smartthingsInit();
-  handleInfo ();
-}
-
 void handleRoot() {
-  server.send ( 200, "text/html", (const char *)target_index0_html );
+  String payload = smartThings.getSmartThingsDevices();
+  server.send ( 200, "application/json", payload );
 }
 
 void handleNotFound() {
@@ -333,21 +266,31 @@ void setup ( void ) {
   }
 
   server.on ( "/", handleRoot );
-  server.on ( "/index.html", handleRoot );
   server.on ( "/config", HTTP_POST, handleSettings );
-  server.on ( "/toggle", HTTP_POST, handleToggle );
   server.on ( "/on", handleOn);
   server.on ( "/open", handleOpen);
   server.on ( "/off", handleOff );
-  server.on ( "/state", handleState);
   server.on ( "/info", handleInfo);
-  server.on ( "/health", handleinit);
-  server.on ( "/reset", handleReset);
+  server.on("/description.xml", handleDescription);
   server.onNotFound ( handleNotFound );
   httpUpdater.setup(&server);
   server.begin();
   MDNS.addService("http", "tcp", 80);
   Serial.println ( "HTTP server started" );
+
+  SSDP.setSchemaURL("description.xml");
+  SSDP.setHTTPPort(80);
+  SSDP.setName("SmartThings SonOff");
+  SSDP.setSerialNumber("001788102201");
+  SSDP.setURL("index.html");
+  SSDP.setModelName("SmartThings SonOff");
+  SSDP.setModelNumber("SonOff");
+  SSDP.setModelURL("https://github.com/vzakharchenko/smartthings-sonoff");
+  SSDP.setManufacturer("SonOff");
+  SSDP.setManufacturerURL("https://github.com/vzakharchenko/smartthings-sonoff");
+  SSDP.setDeviceType(ssdpDeviceType);
+  SSDP.begin();
+  Serial.println ( "SSDP server started" );
   int defaultState = storage.getDefaultState();
   bool lastState = storage.getLastState();
 
@@ -395,7 +338,7 @@ void loop ( void ) {
   if (deviceType == SONOFF_INTERCOM) {
     if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
       openDoor();
-    } 
+    }
 
     if (sonoff.IsButtonChanged()) {
       delay(50);

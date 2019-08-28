@@ -87,6 +87,7 @@ class SmartThings
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + operation + "?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Starting SmartThings Http " + operation + " : " + url );
         http.beginInternal2(url, "https");
+        http.setTimeout(10000);
         http.addHeader("Content-Type", "application/json");
         int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"force\":" + String((force ? "true" : "false")) + "}");
         if (httpCode > 199 && httpCode < 301) {
@@ -147,6 +148,7 @@ class SmartThings
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/current?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Starting SmartThings Http current : " + url );
         http.beginInternal2(url, "https");
+        http.setTimeout(100000);
         http.addHeader("Content-Type", "application/json");
         http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
         String payload = http.getString();
@@ -178,10 +180,14 @@ class SmartThings
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/info?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Starting SmartThings Http current : " + url );
         http.beginInternal2(url, "https");
+        http.setTimeout(100000);
         http.addHeader("Content-Type", "application/json");
         http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
-        payload = http.getString();
+        String payloadJSON = http.getString();
         http.end();
+        if (payloadJSON != String("")) {
+          payload = payloadJSON;
+        }
 
       }
       return payload;
@@ -200,6 +206,7 @@ class SmartThings
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + (start ? "incomingCall" : "endCall") + "?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Starting SmartThings Http incomingCall" + String(start) + " : " + url );
         http.beginInternal2(url, "https");
+        http.setTimeout(200000);
         http.addHeader("Content-Type", "application/json");
         int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\"}");
         http.end();
@@ -211,15 +218,16 @@ class SmartThings
 
 
 
-    void smartthingsInit() {
+    boolean smartthingsInit0(String smartThingsUrl) {
       Serial.println ( "Starting SmartThings Init" );
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
 
         HTTPClient2 http;
-        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + "init?access_token=" + String(storage->getAccessToken());
+        String url = smartThingsUrl + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + "init?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Sending Http Get " + url );
         http.beginInternal2(url, "https");
+        http.setTimeout(100000);
         http.addHeader("Content-Type", "application/json");
         http.POST("{\"ip\":\""
                   + IpAddress2String( WiFi.localIP())
@@ -229,12 +237,31 @@ class SmartThings
                   + String(sonoff->getRelay()->isOn() ? "on" : "off")
                   + "\"}");
         //   http.writeToStream(&Serial);
+        String payload = http.getString();
         http.end();
+        return payload == String("OK");
       } else {
         Serial.println ( "SmartThings Init Skip" );
+        return false;
       }
     }
 
+    void smartthingsInit() {
+      if (smartthingsInit0("https://graph-eu01-euwest1.api.smartthings.com")) {
+        storage->setSmartThingsUrl("https://graph-eu01-euwest1.api.smartthings.com");
+      } else if (smartthingsInit0("https://graph-na04-useast2.api.smartthings.com")) {
+        storage->setSmartThingsUrl("https://graph-na04-useast2.api.smartthings.com");
+      } else if (smartthingsInit0("https://graph.api.smartthings.com")) {
+        storage->setSmartThingsUrl("https://graph.api.smartthings.com");
+      } else if (smartthingsInit0("https://graph-na02-useast1.api.smartthings.com")) {
+        storage->setSmartThingsUrl("https://graph-na02-useast1.api.smartthings.com");
+      } else if (smartthingsInit0("https://graph-ap02-apnortheast2.api.smartthings.com")) {
+        storage->setSmartThingsUrl("https://graph-ap02-apnortheast2.api.smartthings.com");
+      } else {
+               storage->setSmartThingsUrl("unknown");
+      }
+      storage->save();
+    }
 
 
 };

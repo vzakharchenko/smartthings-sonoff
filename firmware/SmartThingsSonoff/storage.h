@@ -12,31 +12,31 @@ class Storage
       int storageVersion;
     } ConfigurationVersion;
 
-    typedef struct
-    {
-      byte package;
-      int storageVersion;
-      char smartThingsUrl[128];
-      char applicationId[128];
-      char accessToken[128];
-      int  defaultState;
-      bool  lastState;
-      char signature[3];
-    } Configuration13101;
-
-    typedef struct
-    {
-      byte package;
-      int storageVersion;
-      char smartThingsUrl[128];
-      char applicationId[128];
-      char accessToken[128];
-      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
-      bool  lastState;// last state of relay
-      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
-      int openTimeOut; // open door timeoutVizit intercom()
-      char signature[3];
-    } Configuration13102;
+//    typedef struct
+//    {
+//      byte package;
+//      int storageVersion;
+//      char smartThingsUrl[128];
+//      char applicationId[128];
+//      char accessToken[128];
+//      int  defaultState;
+//      bool  lastState;
+//      char signature[3];
+//    } Configuration13101;
+//
+//    typedef struct
+//    {
+//      byte package;
+//      int storageVersion;
+//      char smartThingsUrl[128];
+//      char applicationId[128];
+//      char accessToken[128];
+//      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+//      bool  lastState;// last state of relay
+//      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
+//      int openTimeOut; // open door timeoutVizit intercom()
+//      char signature[3];
+//    } Configuration13102;
 
     typedef struct
     {
@@ -134,60 +134,7 @@ class Storage
         loadStruct(&configurationVersion, sizeof(configurationVersion));
         int storageVersion = configurationVersion.storageVersion;
         Serial.println ( "storage version " + String(storageVersion) );
-        if (storageVersion == 101) {
-          Configuration13101 readConfiguration {
-            13,
-            101,
-            "",
-            "",
-            "",
-            0,
-            false,
-            "BD"
-          };
-          loadStruct(&readConfiguration, sizeof(readConfiguration));
-          Serial.println ( "Storage loaded" );
-          if (String(readConfiguration.signature) == String("OK")) {
-            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
-            strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
-            strcpy(configuration.applicationId, readConfiguration.applicationId);
-            strcpy(configuration.accessToken, readConfiguration.accessToken);
-            configuration.defaultState = readConfiguration.defaultState;
-            configuration.lastState = readConfiguration.lastState;
-            save();
-          } else {
-            Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
-          }
-        }
-        if (storageVersion == 102) {
-          Configuration13102 readConfiguration {
-            13,
-            102,
-            "",
-            "",
-            "",
-            0,
-            false,
-            0,
-            2000,
-            "BD"
-          };
-          loadStruct(&readConfiguration, sizeof(readConfiguration));
-          Serial.println ( "Storage loaded" );
-          if (String(readConfiguration.signature) == String("OK")) {
-            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
-            strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
-            strcpy(configuration.applicationId, readConfiguration.applicationId);
-            strcpy(configuration.accessToken, readConfiguration.accessToken);
-            configuration.defaultState = readConfiguration.defaultState;
-            configuration.lastState = readConfiguration.lastState;
-            configuration.deviceType = readConfiguration.deviceType;
-            configuration.openTimeOut = readConfiguration.openTimeOut;
-            save();
-          } else {
-            Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
-          }
-        }
+
         if (storageVersion == 103) {
           Configuration13103 readConfiguration {
             13,
