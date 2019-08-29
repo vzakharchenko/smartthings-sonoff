@@ -1,6 +1,33 @@
 # smartthings-sonoff
 integration smartthings and sonoff devices
 
+# Supported Devices
+SONOFF BASIC,
+SONOFF POW,
+SONOFF RF,
+SONOFF TH,
+SONOFF SV,
+SLAMPHER,S20,
+SONOFF TOUCH,
+SONOFF POW R2,
+SONOFF S31,
+SONOFF T1 1CH,
+ORVIBO B25,
+SONOFF T1 1CH,
+NODEMCU LOLIN,
+D1 MINI RELAYSHIELD,
+YJZK SWITCH 1CH,
+WORKCHOICE ECOPLUG,
+OPENENERGYMONITOR MQTT RELAY,
+WION 50055,
+EXS WIFI RELAY V31,
+XENON SM PW702U,
+ISELECTOR SM PW702,
+ISELECTOR SM PW702U,
+KMC 70011,
+EUROMATE WIFI STECKER SCHUKO,
+LINGAN SWA1
+
 # Instalation Steps:
 ## flash device firmware:
   1. Hardware Preparation https://github.com/arendst/Sonoff-Tasmota/wiki/Hardware-Preparation
