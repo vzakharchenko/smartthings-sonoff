@@ -13,6 +13,7 @@
 #include "storage.h"
 #include "Sonoff.h"
 #include "SamsungSmartThings.h"
+#include "devices.h"
 
 const char *ssid = "";
 const char *password = "";
@@ -53,14 +54,14 @@ void switchOff() {
 
 void relayOn() {
   sonoff.getRelay()->on();
-  digitalWrite ( sonoff.getLed(), 0 );
+  digitalWrite ( sonoff.getLed(), storage.getLedInverse() == 0 ? 1 : 0 );
 }
 
 
 
 void relayOff() {
   sonoff.getRelay()->off();
-  digitalWrite ( sonoff.getLed(), 1 );
+  digitalWrite ( sonoff.getLed(), storage.getLedInverse() == 0 ? 0 : 1 );
 }
 
 
@@ -94,11 +95,6 @@ int getSwitchState() {
   return smartThings.getSmartThingsDevice().state;
 }
 
-void openDoor() {
-  relayOff();
-  delay(storage.getOpenTimeOut());
-  switchOn(true);
-}
 
 void cors () {
   String origin = server.arg("origin");
@@ -115,9 +111,8 @@ void handleSettings () {
   String accessToken = server.arg("accessToken");
   String defaultStateString = server.arg("defaultState");
   String deviceTypeString = server.arg("deviceType");
-  String openTimeOutString = server.arg("openTimeOut");
-  String intercomCallTimeoutString = server.arg("intercomCallTimeout");
-  String gpio14StateString = server.arg("gpio14State");
+  String externalSwitchPinString = server.arg("externalSwitchPin");
+  String externalSwitchStateString = server.arg("externalSwitchState");
   if (applicationId != String("")) {
     storage.setApplicationId(applicationId);
   }
@@ -131,23 +126,21 @@ void handleSettings () {
   }
   if (deviceTypeString != String("")) {
     int value = deviceTypeString.toInt();
-    storage.setDeviceType(value);
+    Device device(value);
+    storage.setRelayPin(device.getRelayPin());
+    storage.setSwitchPin(device.getSwitchPin());
+    storage.setLedPin(device.getLedPin());
   }
-  if (openTimeOutString != String("")) {
-    int value = openTimeOutString.toInt();
-    storage.setOpenTimeOut(value);
+  if (externalSwitchStateString != String("")) {
+    int value = externalSwitchStateString.toInt();
+    storage.setExternalSwitchState(value);
   }
-  if (intercomCallTimeoutString != String("")) {
-    int value = intercomCallTimeoutString.toInt();
-    storage.setIntercomCallTimeout(value);
-  }
-  if (gpio14StateString != String("")) {
-    int value = gpio14StateString.toInt();
-    storage.setGpio14State(value);
+  if (externalSwitchPinString != String("")) {
+    int value = externalSwitchPinString.toInt();
+    storage.setExternalSwitchPin(value);
   }
 
   storage.save();
-  smartThings.smartthingsInit();
   handleInfo();
 }
 
@@ -158,11 +151,6 @@ void handleDescription() {
 void handleOn () {
 
   switchOn(false);
-  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }" );
-}
-
-void handleOpen () {
-  openDoor();
   server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }" );
 }
 
@@ -198,19 +186,24 @@ void handleInfo () {
                 + String(payload)
                 + ", \"buttonState\":\""
                 + String(sonoff.IsButtonOn())
-                + "\", \"versionFirmware\":\""
+                + "\",\"supportedDevices\":"
+                + getDeviceJson()
+                + ", \"versionFirmware\":\""
                 + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
-                + "\", \"openTimeOut\":"
-                + String(storage.getOpenTimeOut())
-                + ", \"gpio14State\":"
-                + String(storage.getGpio14State())
-                + ", \"intercomCallTimeout\":"
-                + String(storage.getIntercomCallTimeout())
-                + ", \"deviceType\":"
-                + String(storage.getDeviceType())
+                + "\", \"relayPin\":"
+                + String(storage.getRelayPin())
+                + ", \"switchPin\":"
+                + String(storage.getSwitchPin())
+                + ", \"externalSwitchPin\":"
+                + String(storage.getExternalSwitchPin())
+                + ", \"ledPin\":"
+                + String(storage.getLedPin())
+                + ", \"externalSwitchState\":"
+                + String(storage.getExternalSwitchState())
                 + ", \"defaultState\":"
                 + String(storage.getDefaultState())
                 + " }");
+  smartThings.smartthingsInit();
 }
 
 void handleRoot() {
@@ -268,7 +261,6 @@ void setup ( void ) {
   server.on ( "/", handleRoot );
   server.on ( "/config", HTTP_POST, handleSettings );
   server.on ( "/on", handleOn);
-  server.on ( "/open", handleOpen);
   server.on ( "/off", handleOff );
   server.on ( "/info", handleInfo);
   server.on("/description.xml", handleDescription);
@@ -334,35 +326,19 @@ void loop ( void ) {
   server.handleClient();
   sonoff.loop();
   boolean buttonState = sonoff.IsButtonOn();
-  int deviceType = storage.getDeviceType();
-  if (deviceType == SONOFF_INTERCOM) {
-    if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
-      openDoor();
-    }
-
-    if (sonoff.IsButtonChanged()) {
-      delay(50);
-      smartThings.incomingCall(buttonState);
-    }
-
-  } else {
-    if (sonoff.IsButtonChanged()) {
-      if (buttonState) {
-        switchOn(true);
-      } else {
-        switchOff(true);
-      }
-    }
-    if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
-      if (sonoff.getRelay()->isOn()) {
-        switchOff(true);
-      }
-      else {
-        switchOn(true);
-      }
+  if (sonoff.IsButtonChanged()) {
+    if (buttonState) {
+      switchOn(true);
+    } else {
+      switchOff(true);
     }
   }
-
-
-
+  if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
+    if (sonoff.getRelay()->isOn()) {
+      switchOff(true);
+    }
+    else {
+      switchOn(true);
+    }
+  }
 }

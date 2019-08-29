@@ -275,7 +275,7 @@ def locationHandler(evt) {
 }
 
 def checkSonOff(parsedEvent) {
-    def timeout = 1000 * 60 * 30;
+    def timeout = 1000 * 60 * 11;
     def curTime = new Date().getTime();
 
     def devices = searchDevicesType("Sonoff Switch");
@@ -283,8 +283,8 @@ def checkSonOff(parsedEvent) {
         return it.getDeviceNetworkId() == modifyMac(parsedEvent.mac)
     };
     if (device) {
-        device.setIp(parsedEvent.ip);
-        device.setPort(parsedEvent.port);
+        device.setIp(convertHexToIP(parsedEvent.ip));
+        device.setPort(convertHexToInt(parsedEvent.port));
         state.sonoffDevicesTimes.put(modifyMac(parsedEvent.mac), curTime)
     }
 }
@@ -398,7 +398,7 @@ def searchDevicesType(devType) {
 
 def healthCheck() {
     ssdpDiscover();
-    def timeout = 1000 * 60 * 30;
+    def timeout = 1000 * 60 * 5;
     def curTime = new Date().getTime();
 
     def devices = searchDevicesType("Sonoff Switch");
@@ -409,7 +409,6 @@ def healthCheck() {
         def ip = state.sonoffMacDevices.get(mac);
         def activeDate = state.sonoffDevicesTimes.get(mac);
         if ((curTime - timeout) > activeDate) {
-            it.setOffline();
             it.markDeviceOffline();
             debug("ip ${ip} offline ${curTime - timeout} > ${activeDate} ")
         } else {
@@ -479,7 +478,7 @@ private def modifyMac(String macString) {
 }
 
 def debug(message) {
-    def debug = false
+    def debug = false;
     if (debug) {
         log.debug message
     }

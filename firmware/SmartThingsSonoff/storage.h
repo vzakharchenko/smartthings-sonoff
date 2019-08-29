@@ -1,3 +1,4 @@
+// #include "Sonoff.h"
 
 class Storage
 {
@@ -12,31 +13,22 @@ class Storage
       int storageVersion;
     } ConfigurationVersion;
 
-//    typedef struct
-//    {
-//      byte package;
-//      int storageVersion;
-//      char smartThingsUrl[128];
-//      char applicationId[128];
-//      char accessToken[128];
-//      int  defaultState;
-//      bool  lastState;
-//      char signature[3];
-//    } Configuration13101;
-//
-//    typedef struct
-//    {
-//      byte package;
-//      int storageVersion;
-//      char smartThingsUrl[128];
-//      char applicationId[128];
-//      char accessToken[128];
-//      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
-//      bool  lastState;// last state of relay
-//      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
-//      int openTimeOut; // open door timeoutVizit intercom()
-//      char signature[3];
-//    } Configuration13102;
+    typedef struct
+    {
+      byte package;
+      int storageVersion;
+      char smartThingsUrl[128];
+      char applicationId[128];
+      char accessToken[128];
+      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      bool lastState;// last state of relay
+      int relayPin;
+      int switchPin;
+      int externalSwitchPin;
+      int ledPin;
+      int externalSwitchState;
+      char signature[3];
+    } Configuration13105;
 
     typedef struct
     {
@@ -46,40 +38,29 @@ class Storage
       char applicationId[128];
       char accessToken[128];
       int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
-      bool  lastState;// last state of relay
-      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
-      int openTimeOut; // open door timeoutVizit intercom()
-      int intercomCallTimeout; // incomming call  timeout Vizit intercom()
+      bool lastState;// last state of relay
+      int relayPin;
+      int switchPin;
+      int externalSwitchPin;
+      int ledPin;
+      int ledPinInverse;
+      int externalSwitchState;
       char signature[3];
-    } Configuration13103;
+    } Configuration13106;
 
-    typedef struct
-    {
-      byte package;
-      int storageVersion;
-      char smartThingsUrl[128];
-      char applicationId[128];
-      char accessToken[128];
-      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
-      bool  lastState;// last state of relay
-      int deviceType;// 0- Basic, 1 - Vizit intercom (modified basic), 2-Basic with remote switch (GPIO14), 3 - POW
-      int openTimeOut; // open door timeoutVizit intercom()
-      int intercomCallTimeout; // incomming call  timeout Vizit intercom()
-      int gpio14State;
-      char signature[3];
-    } Configuration13104;
-
-    Configuration13104 configuration {
+    Configuration13106 configuration {
       13,
-      104,
+      106,
       "",
       "",
       "",
       0,
       false,
+      12,
       0,
-      2000,
-      4000,
+      -1,
+      13,
+      1,
       LOW,
       "OK"
     };
@@ -135,18 +116,21 @@ class Storage
         int storageVersion = configurationVersion.storageVersion;
         Serial.println ( "storage version " + String(storageVersion) );
 
-        if (storageVersion == 103) {
-          Configuration13103 readConfiguration {
+
+        if (storageVersion == 105) {
+          Configuration13105 readConfiguration {
             13,
-            103,
+            105,
             "",
             "",
             "",
             0,
             false,
+            12,
             0,
-            2000,
-            4000,
+            -1,
+            13,
+            LOW,
             "BD"
           };
           loadStruct(&readConfiguration, sizeof(readConfiguration));
@@ -158,26 +142,31 @@ class Storage
             strcpy(configuration.accessToken, readConfiguration.accessToken);
             configuration.defaultState = readConfiguration.defaultState;
             configuration.lastState = readConfiguration.lastState;
-            configuration.deviceType = readConfiguration.deviceType;
-            configuration.openTimeOut = readConfiguration.openTimeOut;
-            configuration.intercomCallTimeout = readConfiguration.intercomCallTimeout;
+            configuration.relayPin = readConfiguration.relayPin;
+            configuration.switchPin = readConfiguration.switchPin;
+            configuration.externalSwitchPin = readConfiguration.externalSwitchPin;
+            configuration.ledPin = readConfiguration.ledPin;
+            configuration.externalSwitchState = readConfiguration.externalSwitchState;
+            configuration.ledPinInverse = 1;
             save();
           } else {
             Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
           }
         }
-        if (storageVersion == 104) {
-          Configuration13104 readConfiguration {
+        if (storageVersion == 106) {
+          Configuration13106 readConfiguration {
             13,
-            104,
+            106,
             "",
             "",
             "",
             0,
             false,
+            12,
             0,
-            2000,
-            4000,
+            -1,
+            13,
+            1,
             LOW,
             "BD"
           };
@@ -248,36 +237,52 @@ class Storage
       return String(configuration.signature) == String("OK");
     }
 
-    int getDeviceType() {
-      return configuration.deviceType;
+    int getRelayPin() {
+      return configuration.relayPin;
     }
 
-    void setDeviceType(int deviceType) {
-      configuration.deviceType = deviceType;
+    void setRelayPin(int relayPin) {
+      configuration.relayPin = relayPin;
     }
 
-    int getOpenTimeOut() {
-      return configuration.openTimeOut;
+    int getSwitchPin() {
+      return configuration.switchPin;
     }
 
-    int setOpenTimeOut(int timeOut) {
-      configuration.openTimeOut = timeOut;
+    void setSwitchPin(int switchPin) {
+      configuration.switchPin = switchPin;
     }
 
-    int getIntercomCallTimeout() {
-      return configuration.intercomCallTimeout;
+    int getExternalSwitchPin() {
+      return configuration.externalSwitchPin;
     }
 
-    int setIntercomCallTimeout(int intercomCallTimeout) {
-      configuration.intercomCallTimeout = intercomCallTimeout;
+    void setExternalSwitchPin(int externalSwitchPin) {
+      configuration.externalSwitchPin = externalSwitchPin;
     }
 
-    int getGpio14State() {
-      return configuration.gpio14State;
+    int getLedPin() {
+      return configuration.ledPin;
     }
 
-    int setGpio14State(int gpio14State) {
-      configuration.gpio14State = gpio14State == LOW ? LOW : HIGH;
+    void setLedPin(int ledPin) {
+      configuration.ledPin = ledPin;
+    }
+    
+    int getLedInverse() {
+      return configuration.ledPinInverse;
+    }
+
+    void setLedPinInverse(int ledPinInverse) {
+      configuration.ledPinInverse = ledPinInverse;
+    }
+
+    int getExternalSwitchState() {
+      return configuration.externalSwitchState;
+    }
+
+    void setExternalSwitchState(int externalSwitchState) {
+      configuration.externalSwitchState = externalSwitchState == LOW ? LOW : HIGH;
     }
 
 };

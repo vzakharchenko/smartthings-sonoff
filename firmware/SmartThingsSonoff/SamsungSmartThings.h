@@ -1,5 +1,6 @@
-
-
+#ifndef SmartThings_h
+#define SmartThings_h
+#include "devices.h"
 typedef struct
 {
   int state;
@@ -231,7 +232,9 @@ class SmartThings
         http.addHeader("Content-Type", "application/json");
         http.POST("{\"ip\":\""
                   + IpAddress2String( WiFi.localIP())
-                  + "\",\"mac\":\""
+                  + "\",\"supportedDevices\":"
+                  + getDeviceJson()
+                  + ",\"mac\":\""
                   + String(WiFi.macAddress())
                   + "\", \"relay\": \""
                   + String(sonoff->getRelay()->isOn() ? "on" : "off")
@@ -258,10 +261,12 @@ class SmartThings
       } else if (smartthingsInit0("https://graph-ap02-apnortheast2.api.smartthings.com")) {
         storage->setSmartThingsUrl("https://graph-ap02-apnortheast2.api.smartthings.com");
       } else {
-               storage->setSmartThingsUrl("unknown");
+        storage->setSmartThingsUrl("unknown");
       }
       storage->save();
     }
 
 
 };
+
+#endif /* SmartThings_h */

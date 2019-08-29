@@ -10,7 +10,7 @@
 #ifdef ARDUINO_ESP8266_ESP01           // Generic ESP's
 #define D0 16
 #define D1 5
-#define D2
+#define D2 4
 #define D3 0
 #define D4 2
 #define D5 14
@@ -18,11 +18,6 @@
 #define D7 13
 #define D8 15
 #endif
-
-#define SONOFF_BASIC 0
-#define SONOFF_INTERCOM 1
-#define SONOFF_BASIC_GPIO14 2
-#define SONOFF_POW 3
 
 class Sonoff
 {
@@ -34,16 +29,12 @@ class Sonoff
     unsigned long remoteButtonStateTime = millis();
     Relay* relay;
     Switch* sw;
-
-    //static const uint8_t RELAY = RELAYPIN; // MTDI
-    //static const uint8_t SWITCH = D3; // GPIO0
-    //static const uint8_t LED = LEDgreen; // MTCK
   public:
 
     Sonoff(Storage* storage ) {
       this->storage = storage;
-      this->relay = new Relay( D6, 0.4, 500, 25000);
-      this->sw =  new Switch( D3, 2, 5);
+      this->relay = new Relay( storage->getRelayPin(), 0.4, 500, 25000);
+      this->sw =  new Switch( storage->getSwitchPin(), 2, 5);
     }
 
     void loop() {
@@ -52,8 +43,8 @@ class Sonoff
     }
 
     void setup() {
-      if (this->storage->getDeviceType() == SONOFF_BASIC_GPIO14 || this->storage->getDeviceType() == SONOFF_INTERCOM ) {
-        pinMode(D5, INPUT);
+      if (this->storage->getExternalSwitchPin() > -1) {
+        pinMode(this->storage->getExternalSwitchPin(), INPUT);
       }
     }
 
@@ -61,29 +52,17 @@ class Sonoff
     boolean IsButtonChanged() {
       boolean buttonState = IsButtonOn();
       if (remoteButtonStateLast != buttonState ) {
-        if (this->storage->getDeviceType() == SONOFF_INTERCOM) {
-          unsigned long remoteButtonCurrentStateTime = millis();
-          if ((remoteButtonCurrentStateTime - remoteButtonStateTime) > (storage->getIntercomCallTimeout())) {
-            remoteButtonStateLast =  buttonState;
-            remoteButtonStateTime = millis();
-            return true;
-          } else {
-             remoteButtonStateTime = millis(); 
-            return false;
-          }
-        } else {
-          remoteButtonStateLast =  buttonState;
-          remoteButtonStateTime = millis();
-          return true;
-        }
+        remoteButtonStateLast =  buttonState;
+        remoteButtonStateTime = millis();
+        return true;
       }
       return false;
     }
 
     boolean IsButtonOn() {
-      if (this->storage->getDeviceType() == SONOFF_BASIC_GPIO14 || this->storage->getDeviceType() == SONOFF_INTERCOM ) {
-        remoteButtonState = digitalRead(D5);
-        return remoteButtonState == this->storage-> getGpio14State();
+      if (this->storage->getExternalSwitchPin() > -1 ) {
+        remoteButtonState = digitalRead(this->storage->getExternalSwitchPin());
+        return remoteButtonState == this->storage-> getExternalSwitchState();
       } else {
         return false;
       }
@@ -98,11 +77,7 @@ class Sonoff
     }
 
     uint8_t getLed() {
-      if (this->storage->getDeviceType() == SONOFF_POW) {
-        return D8;
-      } else {
-        return D7;
-      }
+      return this->storage->getLedPin();
     }
 };
 #endif /* Sonoff_h */

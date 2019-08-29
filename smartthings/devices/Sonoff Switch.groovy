@@ -6,6 +6,7 @@ metadata {
         capability "Health Check"
         attribute "ip", "string"
         attribute "port", "string"
+
         command "setIp"
         command "setPort"
         command "forceOn"
@@ -15,18 +16,45 @@ metadata {
     }
 
     preferences {
+        def supportedDevices = [
+                "SONOFF BASIC",
+                "SONOFF POW",
+                "SONOFF RF",
+                "SONOFF TH",
+                "SONOFF SV",
+                "SLAMPHER",
+                "S20",
+                "SONOFF TOUCH",
+                "SONOFF POW R2",
+                "SONOFF S31",
+                "SONOFF T1 1CH",
+                "ORVIBO B25",
+                "SONOFF T1 1CH",
+                "NODEMCU LOLIN",
+                "D1 MINI RELAYSHIELD",
+                "YJZK SWITCH 1CH",
+                "WORKCHOICE ECOPLUG",
+                "OPENENERGYMONITOR MQTT RELAY",
+                "WION 50055",
+                "EXS WIFI RELAY V31",
+                "XENON SM PW702U",
+                "ISELECTOR SM PW702",
+                "ISELECTOR SM PW702U",
+                "KMC 70011",
+                "EUROMATE WIFI STECKER SCHUKO",
+                "LINGAN SWA1"
+        ];
         section() {
-            paragraph "Device Type"
-            input "deviceType", "enum", title: "Device Type", multiple: false, required: false, options: ["Sonoff Switch", "Sonoff Basic (Remote GPIO14"], defaultValue: "Sonoff Switch"
+            input "deviceType", "enum", title: "Device Type", multiple: false, required: true, options: supportedDevices
         }
         section() {
-            input "powerStateAtStartup", title: "PowerState at startup", "enum", multiple: false, required: false, options: ["Off", "On", "Latest", "SmartThings"], defaultValue: "Off"
+            input "powerStateAtStartup", title: "PowerState at startup", "enum", multiple: false, required: true, options: ["Off", "On", "Latest", "SmartThings"]
         }
-        if (deviceType.equals("Sonoff Basic (Remote GPIO14)")) {
-            section() {
-                paragraph "Default Switch Value"
-                input "gpio14State", title: "Default Switch Value", "enum", multiple: false, required: false, options: ["HIGH", "LOW"], defaultValue: "HIGH";
-            }
+        section() {
+            input "externalSwitchPin", title: "External Switch GPIO Pin", "enum", multiple: false, required: false, options: [16, 5, 4, 0, 2, 14, 12, 13, 15];
+        }
+        section() {
+            input "gpio14State", title: "External Switch Value", "enum", multiple: false, required: false, options: ["HIGH", "LOW"], defaultValue: "HIGH";
         }
     }
 
@@ -49,10 +77,40 @@ metadata {
 
 def updated() {
     def gpio14State0 = gpio14State ? gpio14State : "HIGH";
+    def supportedDevices = [
+            "SONOFF BASIC",
+            "SONOFF POW",
+            "SONOFF RF",
+            "SONOFF TH",
+            "SONOFF SV",
+            "SLAMPHER",
+            "S20",
+            "SONOFF TOUCH",
+            "SONOFF POW R2",
+            "SONOFF S31",
+            "SONOFF T1 1CH",
+            "ORVIBO B25",
+            "SONOFF T1 1CH",
+            "NODEMCU LOLIN",
+            "D1 MINI RELAYSHIELD",
+            "YJZK SWITCH 1CH",
+            "WORKCHOICE ECOPLUG",
+            "OPENENERGYMONITOR MQTT RELAY",
+            "WION 50055",
+            "EXS WIFI RELAY V31",
+            "XENON SM PW702U",
+            "ISELECTOR SM PW702",
+            "ISELECTOR SM PW702U",
+            "KMC 70011",
+            "EUROMATE WIFI STECKER SCHUKO",
+            "LINGAN SWA1"
+    ]
+    ;
     apiPost("/config", null,
             "&defaultState=${["Off", "On", "Latest", "SmartThings"].indexOf(powerStateAtStartup)}" +
-                    "&deviceType=${["Sonoff Switch", "Intercom", "Sonoff Basic (Remote GPIO14"].indexOf(deviceType)}" +
-                    "&gpio14State=${["HIGH", "LOW"].indexOf(gpio14State0)}"
+                    "&deviceType=${supportedDevices.indexOf(deviceType)}" +
+                    "&externalSwitchState=${["HIGH", "LOW"].indexOf(gpio14State0)}" +
+                    "&externalSwitchPin=${externalSwitchPin == null ? -1 : externalSwitchPin}"
             , "application/x-www-form-urlencoded")
 }
 
@@ -65,7 +123,11 @@ def on() {
 }
 
 def off() {
-    apiGet("off", null);
+    if (device.currentValue('switch') == "offline") {
+        forceOff();
+    } else {
+        apiGet("off", null);
+    }
 }
 
 
@@ -83,6 +145,7 @@ def installed() {
 def setIp(ip) {
     sendEvent(name: "ip", value: ip)
 }
+
 
 def setPort(ip) {
     sendEvent(name: "port", value: ip)
@@ -106,6 +169,10 @@ def apiGet(path, query) {
 }
 
 def markDeviceOnline() {
+    debug("switchStatus: ${device.currentValue('switch')};")
+    if (device.currentValue('switch') == "offline") {
+        apiGet("info", null);
+    }
     setDeviceHealth("online")
 }
 
@@ -116,7 +183,7 @@ def markDeviceOffline() {
 }
 
 private setDeviceHealth(String healthState) {
-    debug("healthStatus: ${device.currentValue('healthStatus')}; DeviceWatch-DeviceStatus: ${device.currentValue('DeviceWatch-DeviceStatus')}")
+    //debug("healthStatus: ${device.currentValue('healthStatus')}; DeviceWatch-DeviceStatus: ${device.currentValue('DeviceWatch-DeviceStatus')}")
     // ensure healthState is valid
     List validHealthStates = ["online", "offline"]
     healthState = validHealthStates.contains(healthState) ? healthState : device.currentValue("healthStatus")
@@ -143,7 +210,7 @@ def apiPost(path, query, body, contentType) {
 }
 
 def debug(message) {
-    def debug = true
+    def debug = false
     if (debug) {
         log.debug message
     }
