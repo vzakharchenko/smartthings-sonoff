@@ -275,7 +275,6 @@ def locationHandler(evt) {
 }
 
 def checkSonOff(parsedEvent) {
-    def timeout = 1000 * 60 * 11;
     def curTime = new Date().getTime();
 
     def devices = searchDevicesType("Sonoff Switch");
@@ -398,7 +397,7 @@ def searchDevicesType(devType) {
 
 def healthCheck() {
     ssdpDiscover();
-    def timeout = 1000 * 60 * 5;
+    def timeout = 1000 * 60 * 10;
     def curTime = new Date().getTime();
 
     def devices = searchDevicesType("Sonoff Switch");
