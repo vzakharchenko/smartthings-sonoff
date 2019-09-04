@@ -7,47 +7,6 @@ typedef struct
   char devName[256];
 } SmartThingDevice;
 
-class TransportTraits
-{
-  public:
-    virtual ~TransportTraits()
-    {
-    }
-
-    virtual std::unique_ptr<WiFiClient> create()
-    {
-      return std::unique_ptr<WiFiClient>(new WiFiClient());
-    }
-
-    virtual bool verify(WiFiClient& client, const char* host)
-    {
-      (void)client;
-      (void)host;
-      return true;
-    }
-};
-
-class TLSTraits : public TransportTraits
-{
-  public:
-    TLSTraits()
-    {
-    }
-
-    std::unique_ptr<WiFiClient> create() override
-    {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored  "-Wdeprecated-declarations"
-      return std::unique_ptr<WiFiClient>(new axTLS::WiFiClientSecure());
-#pragma GCC diagnostic pop
-    }
-
-    bool verify(WiFiClient& client, const char* host) override
-    {
-      auto wcs = static_cast<axTLS::WiFiClientSecure&>(client);
-      return true;
-    }
-};
 
 String IpAddress2String(const IPAddress& ipAddress)
 {
@@ -57,21 +16,6 @@ String IpAddress2String(const IPAddress& ipAddress)
               String(ipAddress[3]);
   return ip  ;
 }
-
-class HTTPClient2 : public HTTPClient
-{
-  public:
-    HTTPClient2()
-    {
-    }
-
-    bool beginInternal2(String url, const char* expectedProtocol)
-    {
-      _transportTraits = TransportTraitsPtr(new TLSTraits());
-      _port = 443;
-      return beginInternal(url, expectedProtocol);
-    }
-};
 
 
 class SmartThings
@@ -84,18 +28,20 @@ class SmartThings
       Serial.println ( "changeState:  " + operation + "/" + String(force) );
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
-        HTTPClient2 http;
+        HTTPClient http;
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + operation + "?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Starting SmartThings Http " + operation + " : " + url );
-        http.beginInternal2(url, "https");
-        http.setTimeout(10000);
+        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+        client->setInsecure();
+        http.begin(*client, url);
         http.addHeader("Content-Type", "application/json");
         int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"force\":" + String((force ? "true" : "false")) + "}");
         if (httpCode > 199 && httpCode < 301) {
           String payload = http.getString();
           Serial.println ( "payload = " + payload );
-          DynamicJsonBuffer jsonBuffer;
-          JsonObject& root = jsonBuffer.parseObject(payload);
+          DynamicJsonDocument doc(2048);
+          deserializeJson(doc, payload);
+          JsonObject root = doc.to<JsonObject>();
           http.end();
           if (root["relay"] == String("on")) {
             return 1;
@@ -145,16 +91,18 @@ class SmartThings
       };
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
-        HTTPClient2 http;
+        HTTPClient http;
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/current?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Starting SmartThings Http current : " + url );
-        http.beginInternal2(url, "https");
-        http.setTimeout(100000);
+        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+        client->setInsecure();
+        http.begin(*client, url);
         http.addHeader("Content-Type", "application/json");
         http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
         String payload = http.getString();
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& root = jsonBuffer.parseObject(payload);
+        DynamicJsonDocument doc(2048);
+        deserializeJson(doc, payload);
+        JsonObject root = doc.to<JsonObject>();
         String status = root["status"];
         String devName = root["name"];
         int stState;
@@ -177,11 +125,12 @@ class SmartThings
       String payload = "{}";
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
-        HTTPClient2 http;
+        HTTPClient http;
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/info?access_token=" + String(storage->getAccessToken());
         Serial.println ( "Starting SmartThings Http current : " + url );
-        http.beginInternal2(url, "https");
-        http.setTimeout(100000);
+        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+        client->setInsecure();
+        http.begin(*client, url);
         http.addHeader("Content-Type", "application/json");
         http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
         String payloadJSON = http.getString();
@@ -199,23 +148,6 @@ class SmartThings
       return changeState("off", force);
     }
 
-    void incomingCall(boolean start) {
-      Serial.println ( "incomingCall " + String(start) );
-      if (String(storage->getApplicationId()) != String("") &&
-          String(storage->getAccessToken()) != String("")) {
-        HTTPClient2 http;
-        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + (start ? "incomingCall" : "endCall") + "?access_token=" + String(storage->getAccessToken());
-        Serial.println ( "Starting SmartThings Http incomingCall" + String(start) + " : " + url );
-        http.beginInternal2(url, "https");
-        http.setTimeout(200000);
-        http.addHeader("Content-Type", "application/json");
-        int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\"}");
-        http.end();
-      } else {
-        Serial.println ( "Empty SmartThings Configuration!!!" );
-      }
-    }
-
 
 
 
@@ -224,12 +156,21 @@ class SmartThings
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
 
-        HTTPClient2 http;
-        String url = smartThingsUrl + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + "init?access_token=" + String(storage->getAccessToken());
+        HTTPClient http;
+        String url = smartThingsUrl + "/api/smartapps/installations/"
+                     + String(storage->getApplicationId())
+                     + "/" + "init?access_token=" + String(storage->getAccessToken()
+                         + "&ip=" + IpAddress2String( WiFi.localIP())
+                         + "&mac=" + String(WiFi.macAddress())
+                         + "&relay=" + String(sonoff->getRelay()->isOn() ? "on" : "off")
+                                                          );
         Serial.println ( "Sending Http Get " + url );
-        http.beginInternal2(url, "https");
-        http.setTimeout(100000);
-        http.addHeader("Content-Type", "application/json");
+        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+
+        client->setInsecure();
+        http.begin(*client, url);
+        http.setTimeout(10000);
+        http.addHeader("Content-Type", "application/json");/*
         http.POST("{\"ip\":\""
                   + IpAddress2String( WiFi.localIP())
                   + "\",\"supportedDevices\":"
@@ -238,8 +179,10 @@ class SmartThings
                   + String(WiFi.macAddress())
                   + "\", \"relay\": \""
                   + String(sonoff->getRelay()->isOn() ? "on" : "off")
-                  + "\"}");
+                  + "\"}");*/
+        http.GET();
         //   http.writeToStream(&Serial);
+        Serial.println ( "success connected" );
         String payload = http.getString();
         http.end();
         return payload == String("OK");

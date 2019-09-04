@@ -117,7 +117,7 @@ mappings {
     path("/init") {
         action:
         [
-                POST: "init"
+                GET: "init"
         ]
     }
     path("/on") {
@@ -132,31 +132,17 @@ mappings {
                 POST: "off"
         ]
     }
-    path("/current") {
-        action:
-        [
-                POST: "curState"
-        ]
-    }
-
-    path("/info") {
-        action:
-        [
-                POST: "info"
-        ]
-    }
 }
 
 def init() {
-    def json = request.JSON;
-    def mac = modifyMac(json.mac);
-    state.sonoffMacDevices.put(mac, json.ip);
-    def relay = json.relay;
+    def mac = modifyMac(params.mac);
+    state.sonoffMacDevices.put(mac, params.ip);
+    def relay = params.relay;
     def sonoffDevice = searchDevicesType("Sonoff Switch").find {
         return it.getDeviceNetworkId() == mac
     };
     if (sonoffDevice != null) {
-        debug("init: ${json.ip}:${sonoffDevice.getDeviceNetworkId()}:${relay}");
+        debug("init: ${params.ip}:${sonoffDevice.getDeviceNetworkId()}:${relay}");
         if (relay.equals("on")) {
             sonoffDevice.forceOn();
         } else if (relay.equals("off")) {
@@ -166,7 +152,7 @@ def init() {
         updateActiveTime(mac)
     }
 
-    debug("init: $json")
+    debug("init: $params")
     return "OK"
 }
 
