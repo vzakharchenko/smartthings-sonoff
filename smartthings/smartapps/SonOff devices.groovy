@@ -132,6 +132,12 @@ mappings {
                 POST: "off"
         ]
     }
+    path("/info") {
+        action:
+        [
+                POST: "info"
+        ]
+    }
 }
 
 def init() {
