@@ -164,6 +164,31 @@ class SmartThings
 
     }
 
+    String subscribe() {
+      String payload = "{}";
+      if (String(storage->getApplicationId()) != String("") &&
+          String(storage->getAccessToken()) != String("")) {
+        HTTPClient2 http;
+        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
+                     + String(storage->getApplicationId())
+                     + "/get/subscribe?access_token=" + String(storage->getAccessToken()
+                         + "&ip=" + IpAddress2String( WiFi.localIP())
+                         + "&mac=" + String(WiFi.macAddress()));
+        Serial.println ( "Starting SmartThings Http current : " + url );
+        http.beginInternal2(url, "https");
+        http.addHeader("Content-Type", "application/json");
+        http.GET();
+        String payloadJSON = http.getString();
+        http.end();
+        if (payloadJSON != String("")) {
+          payload = payloadJSON;
+        }
+
+      }
+      return payload;
+
+    }
+
     void off(boolean force) {
       changeState("off", force);
     }

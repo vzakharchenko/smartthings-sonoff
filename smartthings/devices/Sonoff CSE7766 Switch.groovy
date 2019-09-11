@@ -14,6 +14,7 @@ metadata {
         command "forceOff"
         command "markDeviceOnline"
         command "markDeviceOffline"
+        command "subscribeCommand"
     }
 
     preferences {
@@ -89,16 +90,24 @@ def updated() {
                     "&deviceType=${supportedDevices.indexOf(deviceType)}" +
                     "&externalSwitchState=${["HIGH", "LOW"].indexOf(gpio14State0)}" +
                     "&externalSwitchPin=${externalSwitchPin == null ? -1 : externalSwitchPin}" +
-                    "&callback=${getCallback()}" +
+                    "&callback=${getCallBackAddress()}" +
                     "&hub_host=${device.hub.getDataValue("localIP")}" +
                     "&hub_port=${device.hub.getDataValue("localSrvPortTCP")}"
             , "application/x-www-form-urlencoded")
-    subscribeHandler();
+    runIn(5, subscribeHandler);
     runEvery1Hour(subscribeHandler);
 }
 
 def subscribeHandler() {
+    apiPost("/config", null,
+            "hub_host=${device.hub.getDataValue("localIP")}" +
+                    "&hub_port=${device.hub.getDataValue("localSrvPortTCP")}"
+            , "application/x-www-form-urlencoded")
     subscribeAction("/subscribe");
+}
+
+def subscribeCommand() {
+    subscribeHandler();
 }
 
 def parse(description) {

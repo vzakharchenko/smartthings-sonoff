@@ -318,7 +318,7 @@ void setup ( void ) {
   Serial.println ( "configuration.lastState = " + String(lastState) );
   Serial.println("HTTPUpdateServer ready! Open http://" + String(IpAddress2String( WiFi.localIP())) + "/update in your browser");
   sonoff.setup();
-
+  smartThings.subscribe();
 
   if (defaultState == 1) {
     switchOn(true);

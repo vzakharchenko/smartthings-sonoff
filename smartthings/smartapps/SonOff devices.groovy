@@ -134,18 +134,14 @@ mappings {
                 GET: "init"
         ]
     }
-    path("/get/on") {
+
+    path("/get/subscribe") {
         action:
         [
-                GET: "onGET"
+                GET: "subscribe"
         ]
     }
-    path("/get/off") {
-        action:
-        [
-                GET: "offGET"
-        ]
-    }
+
     path("/get/info") {
         action:
         [
@@ -190,7 +186,8 @@ def updateActiveTime(mac) {
 }
 
 
-def onGET() {
+def subscribe() {
+    debug("subscribe event");
     def json = request.JSON;
     def mac = modifyMac(params.mac);
     state.sonoffMacDevices.put(mac, params.ip);
@@ -199,32 +196,11 @@ def onGET() {
     };
     if (sonoffDevice) {
         sonoffDevice.markDeviceOnline();
-        sonoffDevice.forceOn();
         updateActiveTime(mac);
         sonoffDevice.setIp(params.ip);
-
+        sonoffDevice.subscribeCommand();
     }
-
-    debug("on: relay: $relay")
-    return [relay: relay]
-}
-
-def offGET() {
-    def mac = modifyMac(params.mac);
-    state.sonoffMacDevices.put(mac, params.ip);
-
-    def sonoffDevice = searchDevicesType("Sonoff Switch").find {
-        return it.getDeviceNetworkId() == mac
-    };
-    if (sonoffDevice != null) {
-        sonoffDevice.markDeviceOnline();
-        sonoffDevice.forceOff()
-        updateActiveTime(mac);
-        sonoffDevice.setIp(params.ip);
-    }
-
-    debug("off: $params")
-    return [status: "ok"]
+    return "OK"
 }
 
 def infoGET() {
