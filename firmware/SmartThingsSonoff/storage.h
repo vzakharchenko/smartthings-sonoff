@@ -26,9 +26,10 @@ class Storage
       int switchPin;
       int externalSwitchPin;
       int ledPin;
+      int ledPinInverse;
       int externalSwitchState;
       char signature[3];
-    } Configuration13105;
+    } Configuration13106;
 
     typedef struct
     {
@@ -45,12 +46,16 @@ class Storage
       int ledPin;
       int ledPinInverse;
       int externalSwitchState;
+      char callback[256];
+      int seq;
+      char hubHost[256];
+      int hubPort;
       char signature[3];
-    } Configuration13106;
+    } Configuration13107;
 
-    Configuration13106 configuration {
+    Configuration13107 configuration {
       13,
-      106,
+      107,
       "",
       "",
       "",
@@ -62,6 +67,10 @@ class Storage
       13,
       1,
       LOW,
+      "",
+      0,
+      "",
+      -1,
       "OK"
     };
 
@@ -117,10 +126,10 @@ class Storage
         Serial.println ( "storage version " + String(storageVersion) );
 
 
-        if (storageVersion == 105) {
-          Configuration13105 readConfiguration {
+        if (storageVersion == 106) {
+          Configuration13106 readConfiguration {
             13,
-            105,
+            107,
             "",
             "",
             "",
@@ -130,10 +139,11 @@ class Storage
             0,
             -1,
             13,
+            1,
             LOW,
             "BD"
           };
-          loadStruct(&readConfiguration, sizeof(readConfiguration));
+          //  loadStruct(&readConfiguration, sizeof(readConfiguration));
           Serial.println ( "Storage loaded" );
           if (String(readConfiguration.signature) == String("OK")) {
             Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
@@ -147,16 +157,17 @@ class Storage
             configuration.externalSwitchPin = readConfiguration.externalSwitchPin;
             configuration.ledPin = readConfiguration.ledPin;
             configuration.externalSwitchState = readConfiguration.externalSwitchState;
-            configuration.ledPinInverse = 1;
+            configuration.ledPinInverse = readConfiguration.ledPinInverse;
+            configuration.seq = 0;
             save();
           } else {
             Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
           }
         }
-        if (storageVersion == 106) {
-          Configuration13106 readConfiguration {
+        if (storageVersion == 107) {
+          Configuration13107 readConfiguration {
             13,
-            106,
+            107,
             "",
             "",
             "",
@@ -168,6 +179,10 @@ class Storage
             13,
             1,
             LOW,
+            "",
+            0,
+            "",
+            -1,
             "BD"
           };
           loadStruct(&readConfiguration, sizeof(readConfiguration));
@@ -268,7 +283,7 @@ class Storage
     void setLedPin(int ledPin) {
       configuration.ledPin = ledPin;
     }
-    
+
     int getLedInverse() {
       return configuration.ledPinInverse;
     }
@@ -283,6 +298,40 @@ class Storage
 
     void setExternalSwitchState(int externalSwitchState) {
       configuration.externalSwitchState = externalSwitchState == LOW ? LOW : HIGH;
+    }
+
+    String getCallBack() {
+      return configuration.callback;
+    }
+
+    void setCallBack(String callback) {
+      callback.toCharArray(configuration.callback, callback.length() + 1);
+    }
+
+    String getHubHost() {
+      return configuration.hubHost;
+    }
+
+    void setHubHost(String host) {
+      host.toCharArray(configuration.hubHost, host.length() + 1);
+    }
+
+
+    int getHubPort() {
+      return configuration.hubPort;
+    }
+
+    void setHubPort(int port) {
+      configuration.hubPort = port;
+    }
+
+
+    int getSeq() {
+      return configuration.seq;
+    }
+
+    void setSeq(int seq) {
+      configuration.seq = seq;
     }
 
 };

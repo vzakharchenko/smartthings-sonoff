@@ -1,6 +1,21 @@
 #ifndef Device_h
 #define Device_h
 #include "Sonoff.h"
+#include "SamsungSmartThings.h"
+#include "CSE7766.h"
+
+#define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:e:1"
+// #define SSDP_ONECHANEL_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:1"
+
+
+#ifdef SSDP_CSE776_DEVICE_TYPE
+#define SSDP_DEVICE_TYPE SSDP_CSE776_DEVICE_TYPE
+#define CSE7766_TYPE
+
+#else
+#define SSDP_DEVICE_TYPE SSDP_ONECHANEL_DEVICE_TYPE
+#endif //SSDP_CSE776_DEVICE_TYPE
+
 
 #define SONOFF_BASIC 0
 #define SONOFF_POW 1
@@ -29,6 +44,63 @@
 #define KMC_70011 23
 #define EUROMATE_WIFI_STECKER_SCHUKO 24
 
+
+class DeviceHandler
+{
+  private:
+    SmartThings* smartThings;
+#ifdef CSE7766_TYPE
+    CSE7766 powR2;
+    unsigned long mLastTime = 0;
+#define POW_R2_UPDATE_TIME                     5000
+#endif //CSE7766
+  public:
+    DeviceHandler(SmartThings *smartThings) {
+      this->smartThings = smartThings;
+    }
+    void begin() {
+#ifdef CSE7766_TYPE
+      powR2.setRX(1);
+      powR2.begin(); // will initialize serial to 4800 bps
+#endif //CSE7766_TYPE;
+    }
+    void loop() {
+#ifdef CSE7766_TYPE
+
+
+      if ((millis() - mLastTime) >= POW_R2_UPDATE_TIME) {
+
+        // Time
+        mLastTime = millis();
+
+        // read CSE7766
+        powR2.handle();
+        yield();
+        smartThings->sendDirectlyData(
+          String( "{\"cse7766\":{") +
+          String("\"voltage\":\"") + String(powR2.getVoltage()) + String( "\",") +
+          String("\"current\":\"") + String(powR2.getCurrent()) + String("\",") +
+          String("\"activePower\":\"" ) + String(powR2.getActivePower()) + String("\",") +
+          String("\"apparentPower\":\"") + String(powR2.getApparentPower()) + String("\",") +
+          String("\"reactivePower\":\"") + String(powR2.getReactivePower()) + String("\",") +
+          String("\"energy\":\"") + String(powR2.getEnergy()) + String("\"") +
+          String("}}")
+        );
+
+        Serial.println("Voltage " + String(powR2.getVoltage()));
+        Serial.println("Current " + String(powR2.getCurrent()));
+        Serial.println("ActivePower " + String(powR2.getActivePower()));
+        Serial.println("ApparentPower " + String(powR2.getApparentPower()));
+        Serial.println("ReactivePower " + String(powR2.getReactivePower()));
+        Serial.println("PowerFactor " + String(powR2.getPowerFactor()));
+        Serial.println("Energy " + String(powR2.getEnergy()));
+
+      }
+#endif //CSE7766_TYPE
+
+    }
+};
+
 class Device
 {
 
@@ -37,7 +109,6 @@ class Device
     int switchPin = D3;
     int ledPin = D7;
     int ledPinInverse = 1;
-
   public:
     // SWITCH
     Device(int device) {
@@ -211,6 +282,8 @@ class Device
     int getLedPinInverse() {
       return this->ledPinInverse;
     }
+
+
 };
 
 String deviceJSON(int id, String label) {
@@ -244,7 +317,7 @@ String getDeviceJson() {
          deviceJSON(ISELECTOR_SM_PW702U, "ISELECTOR SM PW702U") + "," +
          deviceJSON(KMC_70011, "KMC 70011") + "," +
          deviceJSON(EUROMATE_WIFI_STECKER_SCHUKO, "EUROMATE WIFI STECKER SCHUKO") + "," +
-         deviceJSON(NODEMCU_LOLIN, "LINGAN SWA1") 
+         deviceJSON(NODEMCU_LOLIN, "LINGAN SWA1")
          + "]";
 }
 #endif /* Device_h */

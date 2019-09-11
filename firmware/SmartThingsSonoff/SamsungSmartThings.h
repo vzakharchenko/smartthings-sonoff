@@ -1,12 +1,53 @@
 #ifndef SmartThings_h
 #define SmartThings_h
-#include "devices.h"
+
 typedef struct
 {
   int state;
   char devName[256];
 } SmartThingDevice;
 
+class TransportTraits
+{
+  public:
+    virtual ~TransportTraits()
+    {
+    }
+
+    virtual std::unique_ptr<WiFiClient> create()
+    {
+      return std::unique_ptr<WiFiClient>(new WiFiClient());
+    }
+
+    virtual bool verify(WiFiClient& client, const char* host)
+    {
+      (void)client;
+      (void)host;
+      return true;
+    }
+};
+
+class TLSTraits : public TransportTraits
+{
+  public:
+    TLSTraits()
+    {
+    }
+
+    std::unique_ptr<WiFiClient> create() override
+    {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored  "-Wdeprecated-declarations"
+      return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
+#pragma GCC diagnostic pop
+    }
+
+    bool verify(WiFiClient& client, const char* host) override
+    {
+      auto wcs = static_cast<WiFiClientSecure&>(client);
+      return true;
+    }
+};
 
 String IpAddress2String(const IPAddress& ipAddress)
 {
@@ -17,6 +58,21 @@ String IpAddress2String(const IPAddress& ipAddress)
   return ip  ;
 }
 
+class HTTPClient2 : public HTTPClient
+{
+  public:
+    HTTPClient2()
+    {
+    }
+
+    bool beginInternal2(String url, const char* expectedProtocol)
+    {
+      _transportTraits = TransportTraitsPtr(new TLSTraits());
+      _port = 443;
+      return beginInternal(url, expectedProtocol);
+    }
+};
+
 
 class SmartThings
 {
@@ -24,48 +80,8 @@ class SmartThings
 
     Sonoff* sonoff;
     Storage* storage;
-    int changeState(String operation, boolean force) {
-      Serial.println ( "changeState:  " + operation + "/" + String(force) );
-      if (String(storage->getApplicationId()) != String("") &&
-          String(storage->getAccessToken()) != String("")) {
-        HTTPClient http;
-        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/" + operation + "?access_token=" + String(storage->getAccessToken());
-        Serial.println ( "Starting SmartThings Http " + operation + " : " + url );
-        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-        client->setInsecure();
-        http.begin(*client, url);
-        http.addHeader("Content-Type", "application/json");
-        int httpCode = http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"force\":" + String((force ? "true" : "false")) + "}");
-        if (httpCode > 199 && httpCode < 301) {
-          String payload = http.getString();
-          Serial.println ( "payload = " + payload );
-          DynamicJsonDocument doc(2048);
-          deserializeJson(doc, payload);
-          JsonObject root = doc.to<JsonObject>();
-          http.end();
-          if (root["relay"] == String("on")) {
-            return 1;
-          } else if (root["relay"] == String("off")) {
-            return 0;
-          } else {
-            return -1;
-          }
-        } else {
-          http.end();
-          return  -1;
-
-        }
-
-
-      } else {
-        Serial.println ( "Empty SmartThings Configuration!!!" );
-      }
-      if (operation == String("on")) {
-        return 1;
-      } else {
-        return 0;
-      }
-
+    void changeState(String operation, boolean force) {
+      sendDirectlyData("{}");
     }
   public:
 
@@ -75,30 +91,32 @@ class SmartThings
       //this->storage2 = (Storage *) storage;
     }
 
-    int on(boolean force) {
-      return changeState("on", force);
+    void on(boolean force) {
+      changeState("on", force);
     }
 
     int getSwitchState() {
-      return getSmartThingsDevice().state;
+      return getSmartThingsDeviceState().state;
     }
 
 
-    SmartThingDevice getSmartThingsDevice() {
+    SmartThingDevice getSmartThingsDeviceState() {
       SmartThingDevice smartThingsDevice{
         -1,
         ""
       };
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
-        HTTPClient http;
-        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/current?access_token=" + String(storage->getAccessToken());
+        HTTPClient2 http;
+        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
+                     + String(storage->getApplicationId())
+                     + "/get/info?access_token=" + String(storage->getAccessToken()
+                         + "&ip=" + IpAddress2String( WiFi.localIP())
+                         + "&mac=" + String(WiFi.macAddress()));
         Serial.println ( "Starting SmartThings Http current : " + url );
-        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-        client->setInsecure();
-        http.begin(*client, url);
+        http.beginInternal2(url, "https");
         http.addHeader("Content-Type", "application/json");
-        http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
+        http.GET();
         String payload = http.getString();
         DynamicJsonDocument doc(2048);
         deserializeJson(doc, payload);
@@ -121,18 +139,20 @@ class SmartThings
       return smartThingsDevice;
     }
 
-    String getSmartThingsDevices() {
+    String getSmartThingsDevice() {
       String payload = "{}";
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
-        HTTPClient http;
-        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/" + String(storage->getApplicationId()) + "/info?access_token=" + String(storage->getAccessToken());
+        HTTPClient2 http;
+        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
+                     + String(storage->getApplicationId())
+                     + "/get/info?access_token=" + String(storage->getAccessToken()
+                         + "&ip=" + IpAddress2String( WiFi.localIP())
+                         + "&mac=" + String(WiFi.macAddress()));
         Serial.println ( "Starting SmartThings Http current : " + url );
-        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-        client->setInsecure();
-        http.begin(*client, url);
+        http.beginInternal2(url, "https");
         http.addHeader("Content-Type", "application/json");
-        http.POST("{\"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }");
+        http.GET();
         String payloadJSON = http.getString();
         http.end();
         if (payloadJSON != String("")) {
@@ -144,10 +164,25 @@ class SmartThings
 
     }
 
-    int off(boolean force) {
-      return changeState("off", force);
+    void off(boolean force) {
+      changeState("off", force);
     }
 
+    void sendDirectlyData(String data) {
+      HTTPClient http;
+      http.begin("http://192.100.200.83:39500/notify");
+      http.addHeader("Content-Type", "application/json");
+      http.POST("{\"ip\":\""
+                + IpAddress2String( WiFi.localIP())
+                + "\",\"mac\":\""
+                + String(WiFi.macAddress())
+                + "\",\"data\":"
+                + String(data)
+                + ", \"relay\": \""
+                + String(sonoff->getRelay()->isOn() ? "on" : "off")
+                + "\"}");
+      http.end();
+    }
 
 
 
@@ -156,7 +191,7 @@ class SmartThings
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
 
-        HTTPClient http;
+        HTTPClient2 http;
         String url = smartThingsUrl + "/api/smartapps/installations/"
                      + String(storage->getApplicationId())
                      + "/" + "init?access_token=" + String(storage->getAccessToken()
@@ -165,10 +200,7 @@ class SmartThings
                          + "&relay=" + String(sonoff->getRelay()->isOn() ? "on" : "off")
                                                           );
         Serial.println ( "Sending Http Get " + url );
-        std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-
-        client->setInsecure();
-        http.begin(*client, url);
+        http.beginInternal2(url, "https");
         http.setTimeout(10000);
         http.addHeader("Content-Type", "application/json");/*
         http.POST("{\"ip\":\""
@@ -211,5 +243,6 @@ class SmartThings
 
 
 };
+
 
 #endif /* SmartThings_h */

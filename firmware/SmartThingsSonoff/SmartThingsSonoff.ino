@@ -6,31 +6,39 @@
 #include <EEPROM.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <ArduinoJson.h>
-#include <ArduinoOTA.h>
 #include <WiFiManager.h>
 #include <Ticker.h>
-#include <ESP8266SSDP.h>
+#include "SSDP.h"
 #include "storage.h"
 #include "Sonoff.h"
 #include "SamsungSmartThings.h"
 #include "devices.h"
 
+
+
+
 const char *ssid = "";
 const char *password = "";
 
-const String ssdpDeviceType = "urn:sonoff:device:vzakharchenko:1";
+const String ssdpDeviceType = SSDP_DEVICE_TYPE;
 
 unsigned long previousMillis = 0;
 const long interval = 2000;
 
+int nexSeq = 0;
+
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
+SSDPClass2 SSDP2;
 
 
 Storage storage;
 Sonoff sonoff(&storage);
 SmartThings smartThings(&sonoff, &storage );
+DeviceHandler deviceHandler(&smartThings);
 Ticker ticker;
+
+
 
 void tick()
 {
@@ -92,7 +100,7 @@ void switchOff(boolean force) {
 }
 
 int getSwitchState() {
-  return smartThings.getSmartThingsDevice().state;
+  return smartThings.getSwitchState();
 }
 
 
@@ -113,6 +121,10 @@ void handleSettings () {
   String deviceTypeString = server.arg("deviceType");
   String externalSwitchPinString = server.arg("externalSwitchPin");
   String externalSwitchStateString = server.arg("externalSwitchState");
+  String callback = server.arg("callback");
+  String hubHost = server.arg("hub_host");
+  String hubPort = server.arg("hub_Port");
+
   if (applicationId != String("")) {
     storage.setApplicationId(applicationId);
   }
@@ -139,17 +151,32 @@ void handleSettings () {
     int value = externalSwitchPinString.toInt();
     storage.setExternalSwitchPin(value);
   }
-
+  if (callback != String("")) {
+    storage.setCallBack(callback);
+  }
+  if (hubHost != String("")) {
+    storage.setHubHost(hubHost);
+  }
+  if (hubPort != String("")) {
+    int value = hubPort.toInt();
+    storage.setHubPort(value);
+  }
   storage.save();
   handleInfo();
 }
 
 void handleDescription() {
-  SSDP.schema(server.client());
+  SSDP2.schema(server.client());
+}
+
+void handleSubscription() {
+  Serial.println ( "handleSubscription " );
+  server.sendHeader("SID", SSDP2.getUuid());
+  server.sendHeader("TIMEOUT", "Second-28800");
+  server.send ( 200 );
 }
 
 void handleOn () {
-
   switchOn(false);
   server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }" );
 }
@@ -161,8 +188,7 @@ void handleOff () {
 }
 
 void handleInfo () {
-
-  String payload = smartThings.getSmartThingsDevices();
+  String payload = smartThings.getSmartThingsDevice();
   server.send ( 200, "application/json",
                 "{ \"relay\": \""
                 + String(sonoff.getRelay()->isOn() ? "on" : "off")
@@ -207,7 +233,7 @@ void handleInfo () {
 }
 
 void handleRoot() {
-  String payload = smartThings.getSmartThingsDevices();
+  String payload = smartThings.getSmartThingsDevice();
   server.send ( 200, "application/json", payload );
 }
 
@@ -230,6 +256,7 @@ void handleNotFound() {
 
 void setup ( void ) {
   storage.load();
+  storage.save();
   pinMode ( sonoff.getLed(), OUTPUT );
   Serial.begin ( 9600 );
   ticker.attach(0.6, tick);
@@ -264,25 +291,26 @@ void setup ( void ) {
   server.on ( "/off", handleOff );
   server.on ( "/info", handleInfo);
   server.on("/description.xml", handleDescription);
+  server.on ( "/subscribe", handleSubscription );
   server.onNotFound ( handleNotFound );
   httpUpdater.setup(&server);
   server.begin();
   MDNS.addService("http", "tcp", 80);
   Serial.println ( "HTTP server started" );
 
-  SSDP.setSchemaURL("description.xml");
-  SSDP.setHTTPPort(80);
-  SSDP.setName("SmartThings SonOff");
-  SSDP.setSerialNumber("001788102201");
-  SSDP.setURL("index.html");
-  SSDP.setModelName("SmartThings SonOff");
-  SSDP.setModelNumber("SonOff");
-  SSDP.setModelURL("https://github.com/vzakharchenko/smartthings-sonoff");
-  SSDP.setManufacturer("SonOff");
-  SSDP.setManufacturerURL("https://github.com/vzakharchenko/smartthings-sonoff");
-  SSDP.setDeviceType(ssdpDeviceType);
-  SSDP.begin();
-  Serial.println ( "SSDP server started" );
+  SSDP2.setSchemaURL("description.xml");
+  SSDP2.setHTTPPort(80);
+  SSDP2.setName("SmartThings SonOff");
+  SSDP2.setSerialNumber("001788102201");
+  SSDP2.setURL("index.html");
+  SSDP2.setModelName("SmartThings SonOff");
+  SSDP2.setModelNumber("SonOff");
+  SSDP2.setModelURL("https://github.com/vzakharchenko/smartthings-sonoff");
+  SSDP2.setManufacturer("SonOff");
+  SSDP2.setManufacturerURL("https://github.com/vzakharchenko/smartthings-sonoff");
+  SSDP2.setDeviceType(ssdpDeviceType);
+  SSDP2.begin();
+  Serial.println ( "SSDP2 server started" );
   int defaultState = storage.getDefaultState();
   bool lastState = storage.getLastState();
 
@@ -290,7 +318,7 @@ void setup ( void ) {
   Serial.println ( "configuration.lastState = " + String(lastState) );
   Serial.println("HTTPUpdateServer ready! Open http://" + String(IpAddress2String( WiFi.localIP())) + "/update in your browser");
   sonoff.setup();
-  ArduinoOTA.begin();
+
 
   if (defaultState == 1) {
     switchOn(true);
@@ -317,14 +345,19 @@ void setup ( void ) {
   } else {
     switchOff(true);
   }
-  ArduinoOTA.begin();
+
+  int seq = storage.getSeq();
+  storage.setSeq(seq + 1);
+  deviceHandler.begin();
 }
 
 void loop ( void ) {
-  ArduinoOTA.handle();
-  yield();
+
   server.handleClient();
+  yield();
   sonoff.loop();
+  yield();
+  deviceHandler.loop();
   boolean buttonState = sonoff.IsButtonOn();
   if (sonoff.IsButtonChanged()) {
     if (buttonState) {

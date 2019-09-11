@@ -1,6 +1,7 @@
 metadata {
-    definition(name: "Sonoff Switch", namespace: "vzakharchenko", author: "Vasiliy Zakharchenko", vid: "generic-switch") {
+    definition(name: "Sonoff CSE7766 Switch", namespace: "vzakharchenko", author: "Vasiliy Zakharchenko", vid: "generic-switch") {
         capability "Actuator"
+        capability "Power Meter"
         capability "Sensor"
         capability "Switch"
         capability "Health Check"
@@ -17,32 +18,7 @@ metadata {
 
     preferences {
         def supportedDevices = [
-                "SONOFF BASIC",
-                "SONOFF POW",
-                "SONOFF RF",
-                "SONOFF TH",
-                "SONOFF SV",
-                "SLAMPHER",
-                "S20",
-                "SONOFF TOUCH",
-                "SONOFF POW R2",
-                "SONOFF S31",
-                "SONOFF T1 1CH",
-                "ORVIBO B25",
-                "SONOFF T1 1CH",
-                "NODEMCU LOLIN",
-                "D1 MINI RELAYSHIELD",
-                "YJZK SWITCH 1CH",
-                "WORKCHOICE ECOPLUG",
-                "OPENENERGYMONITOR MQTT RELAY",
-                "WION 50055",
-                "EXS WIFI RELAY V31",
-                "XENON SM PW702U",
-                "ISELECTOR SM PW702",
-                "ISELECTOR SM PW702U",
-                "KMC 70011",
-                "EUROMATE WIFI STECKER SCHUKO",
-                "LINGAN SWA1"
+                "SONOFF POW R2"
         ];
         section() {
             input "deviceType", "enum", title: "Device Type", multiple: false, required: true, options: supportedDevices
@@ -68,9 +44,12 @@ metadata {
                 attributeState "offline", label: '${name}', icon: "st.switches.switch.off", backgroundColor: "#cccccc"
             }
         }
+        valueTile("power", "device.power") {
+            state "default", label: '${currentValue} W'
+        }
 
-        main(["switch"])
-        details(["switch"])
+        main(["switch", "power"])
+        details(["switch", "power"])
 
     }
 }
@@ -105,14 +84,21 @@ def updated() {
             "EUROMATE WIFI STECKER SCHUKO",
             "LINGAN SWA1"
     ]
-    ;
-    debug("getCallBackAddress() = ${getCallBackAddress()}");
     apiPost("/config", null,
             "&defaultState=${["Off", "On", "Latest", "SmartThings"].indexOf(powerStateAtStartup)}" +
                     "&deviceType=${supportedDevices.indexOf(deviceType)}" +
                     "&externalSwitchState=${["HIGH", "LOW"].indexOf(gpio14State0)}" +
-                    "&externalSwitchPin=${externalSwitchPin == null ? -1 : externalSwitchPin}"
+                    "&externalSwitchPin=${externalSwitchPin == null ? -1 : externalSwitchPin}" +
+                    "&callback=${getCallback()}" +
+                    "&hub_host=${device.hub.getDataValue("localIP")}" +
+                    "&hub_port=${device.hub.getDataValue("localSrvPortTCP")}"
             , "application/x-www-form-urlencoded")
+    subscribeHandler();
+    runEvery1Hour(subscribeHandler);
+}
+
+def subscribeHandler() {
+    subscribeAction("/subscribe");
 }
 
 def parse(description) {
@@ -129,6 +115,9 @@ def parse(description) {
             }
             if (json.ip) {
                 setIp(json.ip);
+            }
+            if (json.data && json.data.cse7766) {
+                setPower(json.data.cse7766.activePower);
             }
         }
     }
@@ -165,6 +154,10 @@ def setIp(ip) {
 
 def setPort(ip) {
     sendEvent(name: "port", value: ip)
+}
+
+def setPower(power) {
+    sendEvent(name: "power", value: power);
 }
 
 def apiGet(path, query) {
@@ -226,7 +219,28 @@ def apiPost(path, query, body, contentType) {
 }
 
 private String getCallBackAddress() {
-    return device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP")
+    return "http://" + device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP") + "/notify"
+}
+
+private subscribeAction(path) {
+    def url = "${device.currentValue("ip")}:${device.currentValue("port")}";
+    log.trace "subscribe($path, $callbackPath)"
+    def address = getCallBackAddress()
+
+    def result = new physicalgraph.device.HubAction(
+            method: "SUBSCRIBE",
+            path: path,
+            headers: [
+                    HOST    : url,
+                    CALLBACK: "<${address}>",
+                    NT      : "upnp:event",
+                    TIMEOUT : "Second-28800"
+            ]
+    )
+
+    log.trace "SUBSCRIBE $path"
+
+    return result
 }
 
 def debug(message) {

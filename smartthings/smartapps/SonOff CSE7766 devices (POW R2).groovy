@@ -1,5 +1,5 @@
 definition(
-        name: "SonOff devices",
+        name: "SonOff CSE7766 devices (POW R2) ",
         minHubCoreVersion: '000.021.00001',
         executeCommandsLocally: true,
         namespace: "vzakharchenko",
@@ -15,7 +15,7 @@ preferences {
 }
 
 def config() {
-    def devices = searchDevicesType("Sonoff Switch");
+    def devices = searchDevicesType("Sonoff CSE7766 Switch");
     if (!state.clearDevices) {
         state.sonoffMacDevices = [:];
         state.clearDevices = true
@@ -33,16 +33,6 @@ def config() {
     //ssdp request every fifth refresh
     if ((refreshCount % 2) == 0) {
         ssdpDiscover();
-    }
-
-    if (!state.deviceTypes) {
-        state.deviceTypes = ["Sonoff Switch", "Sonoff Switch (Remote GPIO14)"];
-    }
-    if (!state.powerStateAtStartupList) {
-        state.powerStateAtStartupList = ["Off", "On", "Latest", "SmartThings"];
-    }
-    if (!state.gpio14StateList) {
-        state.gpio14StateList = ["HIGH", "LOW"];
     }
 
     dynamicPage(name: "config", title: "SonOff Manager", refreshInterval: refreshInterval, install: true, uninstall: true) {
@@ -100,11 +90,11 @@ def initialize() {
 
             def ip = state.sonoffMacDevices.get(mac);
             debug("mac = ${mac}");
-            def sonoffDevice = searchDevicesType("Sonoff Switch").find {
+            def sonoffDevice = searchDevicesType("Sonoff CSE7766 Switch").find {
                 return it.getDeviceNetworkId() == mac
             };
             if (sonoffDevice == null) {
-                sonoffDevice = addChildDevice("vzakharchenko", "Sonoff Switch", mac, theHub.id, [label: "Sonoff(${mac})", name: "Sonoff(${mac})"])
+                sonoffDevice = addChildDevice("vzakharchenko", "Sonoff CSE7766 Switch", mac, theHub.id, [label: "Sonoff(${mac}) POWR2", name: "Sonoff(${mac}) POWR2"])
             }
             sonoffDevice.setIp(ip);
             sonoffDevice.setPort("80");
@@ -117,6 +107,7 @@ def initialize() {
     if (!state.subscribe) {
         subscribe(location, "ssdpTerm." + getURN(), locationHandler)
         state.subscribe = true
+
     }
     if (offlineTimeout == "never") {
         state.offlineTimeOut = 0;
@@ -158,7 +149,7 @@ def init() {
     def mac = modifyMac(params.mac);
     state.sonoffMacDevices.put(mac, params.ip);
     def relay = params.relay;
-    def sonoffDevice = searchDevicesType("Sonoff Switch").find {
+    def sonoffDevice = searchDevicesType("Sonoff CSE7766 Switch").find {
         return it.getDeviceNetworkId() == mac
     };
     if (sonoffDevice != null) {
@@ -180,7 +171,7 @@ def init() {
 def updateActiveTime(mac) {
     def date = new Date();
     debug("update time for ${mac} states: ${state.sonoffDevicesTimes}");
-    def sonoffDevice = searchDevicesType("Sonoff Switch").find {
+    def sonoffDevice = searchDevicesType("Sonoff CSE7766 Switch").find {
         return it.getDeviceNetworkId() == mac
     };
     if (sonoffDevice != null) {
@@ -194,7 +185,7 @@ def onGET() {
     def json = request.JSON;
     def mac = modifyMac(params.mac);
     state.sonoffMacDevices.put(mac, params.ip);
-    def sonoffDevice = searchDevicesType("Sonoff Switch").find {
+    def sonoffDevice = searchDevicesType("Sonoff CSE7766 Switch").find {
         return it.getDeviceNetworkId() == mac
     };
     if (sonoffDevice) {
@@ -213,7 +204,7 @@ def offGET() {
     def mac = modifyMac(params.mac);
     state.sonoffMacDevices.put(mac, params.ip);
 
-    def sonoffDevice = searchDevicesType("Sonoff Switch").find {
+    def sonoffDevice = searchDevicesType("Sonoff CSE7766 Switch").find {
         return it.getDeviceNetworkId() == mac
     };
     if (sonoffDevice != null) {
@@ -235,7 +226,7 @@ def infoGET() {
     def mac = modifyMac(params.mac);
     debug("mac=${mac}");
     state.sonoffMacDevices.put(mac, params.ip);
-    def sonoffDevice = searchDevicesType("Sonoff Switch").find {
+    def sonoffDevice = searchDevicesType("Sonoff CSE7766 Switch").find {
         return it.getDeviceNetworkId() == mac
     };
     if (sonoffDevice != null) {
@@ -252,7 +243,7 @@ def infoGET() {
 }
 
 def getURN() {
-    return "urn:sonoff:device:vzakharchenko:1"
+    return "urn:sonoff:device:vzakharchenko:e:1"
 }
 
 void ssdpDiscover() {
@@ -281,7 +272,7 @@ def locationHandler(evt) {
 def checkSonOff(parsedEvent) {
     def curTime = new Date().getTime();
 
-    def devices = searchDevicesType("Sonoff Switch");
+    def devices = searchDevicesType("Sonoff CSE7766 Switch");
     def device = devices.find {
         return it.getDeviceNetworkId() == modifyMac(parsedEvent.mac)
     };
@@ -405,7 +396,7 @@ def healthCheck() {
     def curTime = new Date().getTime();
 
 
-    def devices = searchDevicesType("Sonoff Switch");
+    def devices = searchDevicesType("Sonoff CSE7766 Switch");
 
 
     devices.each {
