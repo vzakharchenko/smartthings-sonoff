@@ -4,8 +4,8 @@
 #include "SamsungSmartThings.h"
 #include "CSE7766.h"
 
-#define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:e:1"
-// #define SSDP_ONECHANEL_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:1"
+// #define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:e:1"
+#define SSDP_ONECHANEL_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:1"
 
 
 #ifdef SSDP_CSE776_DEVICE_TYPE

@@ -111,8 +111,17 @@ def updated() {
             "&defaultState=${["Off", "On", "Latest", "SmartThings"].indexOf(powerStateAtStartup)}" +
                     "&deviceType=${supportedDevices.indexOf(deviceType)}" +
                     "&externalSwitchState=${["HIGH", "LOW"].indexOf(gpio14State0)}" +
-                    "&externalSwitchPin=${externalSwitchPin == null ? -1 : externalSwitchPin}"
+                    "&externalSwitchPin=${externalSwitchPin == null ? -1 : externalSwitchPin}" +
+                    "&callback=${getCallback()}" +
+                    "&hub_host=${device.hub.getDataValue("localIP")}"+
+                    "&hub_port=${device.hub.getDataValue("localSrvPortTCP")}"
             , "application/x-www-form-urlencoded")
+    subscribeHandler();
+    runEvery1Hour(subscribeHandler);
+}
+
+def subscribeHandler(){
+    subscribeAction("/subscribe");
 }
 
 def parse(description) {
@@ -226,7 +235,28 @@ def apiPost(path, query, body, contentType) {
 }
 
 private String getCallBackAddress() {
-    return device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP")
+    return "http://"+device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP")+"/notify"
+}
+
+private subscribeAction(path) {
+    def url = "${device.currentValue("ip")}:${device.currentValue("port")}";
+    log.trace "subscribe($path, $callbackPath)"
+    def address = getCallBackAddress()
+
+    def result = new physicalgraph.device.HubAction(
+            method: "SUBSCRIBE",
+            path: path,
+            headers: [
+                    HOST: url,
+                    CALLBACK: "<${address}>",
+                    NT: "upnp:event",
+                    TIMEOUT: "Second-28800"
+            ]
+    )
+
+    log.trace "SUBSCRIBE $path"
+
+    return result
 }
 
 def debug(message) {
