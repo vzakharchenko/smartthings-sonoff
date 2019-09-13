@@ -44,6 +44,19 @@
 #define KMC_70011 23
 #define EUROMATE_WIFI_STECKER_SCHUKO 24
 
+// dual
+#define SONOFF_DUAL 25
+#define SONOFF_DUAL_R2 26
+#define SONOFF_T1_2CH 27
+#define ELECTRODRAGON_WIFI_IOT 28
+#define YJZK_SWITCH_2CH 29
+// 3ch
+#define SONOFF_T1_3CH 30
+#define YJZK_SWITCH_3CH 31
+// 4ch
+#define SONOFF_4CH 32
+#define SONOFF_4CH_PRO 33
+#define ITEAD_SONOFF_IFAN02 34
 
 class DeviceHandler
 {
@@ -105,16 +118,26 @@ class Device
 {
 
   private:
-    int relayPin = D6;
-    int switchPin = D3;
+    int relay1Pin = D6;
+    int switch1Pin = D3;
+    int relay2Pin = D6;
+    int switch2Pin = D3;
+    int relay3Pin = D6;
+    int switch3Pin = D3;
+    int relay4Pin = D6;
+    int switch4Pin = D3;
     int ledPin = D7;
     int ledPinInverse = 1;
+
   public:
     // SWITCH
     Device(int device) {
       switch (device) {
         case WORKCHOICE_ECOPLUG: {
-            switchPin = D7;
+            switch1Pin = D7;
+            switch2Pin = -1;
+            switch3Pin = -1;
+            switch4Pin = -1;
             break;
           }
         case SONOFF_BASIC:
@@ -136,25 +159,72 @@ class Device
         case OPENENERGYMONITOR_MQTT_RELAY:
         case EXS_WIFI_RELAY_V31:
           {
-            switchPin = D3;
+            switch1Pin = D3;
+            switch2Pin = -1;
+            switch3Pin = -1;
+            switch4Pin = -1;
             break;
           }
         case EUROMATE_WIFI_STECKER_SCHUKO:
         case ORVIBO_B25: {
-            switchPin = D5;
+            switch1Pin = D5;
+            switch2Pin = -1;
+            switch3Pin = -1;
+            switch4Pin = -1;
             break;
           }
         case XENON_SM_PW702U:
         case ISELECTOR_SM_PW702:
         case WION_50055: {
-            switchPin = 13;
+            switch1Pin = 13;
+            switch2Pin = -1;
+            switch3Pin = -1;
+            switch4Pin = -1;
+            break;
+          }
+        case ELECTRODRAGON_WIFI_IOT: {
+            switch1Pin = 0;
+            switch2Pin = 2;
+            switch3Pin = -1;
+            switch4Pin = -1;
+            break;
+          }
+        case YJZK_SWITCH_2CH:
+        case SONOFF_DUAL:
+        case SONOFF_T1_2CH:
+        case SONOFF_DUAL_R2: {
+            switch1Pin = 0;
+            switch2Pin = 9;
+            switch3Pin = -1;
+            switch4Pin = -1;
+            break;
+          }
+        case YJZK_SWITCH_3CH:
+        case SONOFF_T1_3CH: {
+            switch1Pin = 0;
+            switch2Pin = 9;
+            switch3Pin = 10;
+            switch4Pin = -1;
+            break;
+          }
+        case ITEAD_SONOFF_IFAN02:
+        case SONOFF_4CH_PRO:
+        case SONOFF_4CH: {
+            switch1Pin = 0;
+            switch2Pin = 9;
+            switch3Pin = 10;
+            switch4Pin = 14;
             break;
           }
         default: {
-            switchPin = D3;
+            switch1Pin = D3;
+            switch2Pin = -1;
+            switch3Pin = -1;
+            switch4Pin = -1;
             break;
           }
       }
+
       //RELAY PIN
       switch (device) {
         case SONOFF_BASIC:
@@ -169,13 +239,19 @@ class Device
         case SONOFF_S31:
         case SONOFF_S31_LITE:
         case SONOFF_T1_1CH: {
-            relayPin = D6;
+            relay1Pin = D6;
+            relay2Pin = -1;
+            relay3Pin = -1;
+            relay4Pin = -1;
             break;
           }
         case D1_MINI_RELAYSHIELD:
         case EUROMATE_WIFI_STECKER_SCHUKO:
         case ORVIBO_B25: {
-            relayPin = D1;
+            relay1Pin = D1;
+            relay2Pin = -1;
+            relay3Pin = -1;
+            relay4Pin = -1;
             break;
           }
         case YJZK_SWITCH_1CH:
@@ -183,27 +259,76 @@ class Device
         case XENON_SM_PW702U:
         case ISELECTOR_SM_PW702:
         case NODEMCU_LOLIN: {
-            relayPin = 12;
+            relay1Pin = 12;
+            relay2Pin = -1;
+            relay3Pin = -1;
+            relay4Pin = -1;
             break;
           }
         case WION_50055:
         case WORKCHOICE_ECOPLUG: {
-            relayPin = 15;
+            relay1Pin = 15;
+            relay2Pin = -1;
+            relay3Pin = -1;
+            relay4Pin = -1;
             break;
           }
         case EXS_WIFI_RELAY_V31: {
-            relayPin = 13;
+            relay1Pin = 13;
+            relay2Pin = -1;
+            relay3Pin = -1;
+            relay4Pin = -1;
             break;
           }
         case KMC_70011: {
-            relayPin = 14;
+            relay1Pin = 14;
+            relay2Pin = -1;
+            relay3Pin = -1;
+            relay4Pin = -1;
+            break;
+          }
+        case ELECTRODRAGON_WIFI_IOT: {
+            relay1Pin = 12;
+            relay2Pin = 13;
+            relay3Pin = -1;
+            relay4Pin = -1;
+            break;
+          }
+        case SONOFF_DUAL:
+        case SONOFF_T1_2CH:
+        case SONOFF_DUAL_R2: {
+            relay1Pin = 12;
+            relay2Pin = 5;
+            relay3Pin = -1;
+            relay4Pin = -1;
+            break;
+          }
+        case YJZK_SWITCH_3CH:
+        case SONOFF_T1_3CH: {
+            relay1Pin = 12;
+            relay2Pin = 5;
+            relay3Pin = 4;
+            relay4Pin = -1;
+            break;
+          }
+        case ITEAD_SONOFF_IFAN02:
+        case SONOFF_4CH_PRO:
+        case SONOFF_4CH: {
+            relay1Pin = 12;
+            relay2Pin = 5;
+            relay3Pin = 4;
+            relay4Pin = 15;
             break;
           }
         default: {
-            relayPin = D3;
+            relay1Pin = D6;
+            relay2Pin = -1;
+            relay3Pin = -1;
+            relay4Pin = -1;
             break;
           }
       }
+
       // ledPin
       switch (device) {
         case SONOFF_BASIC:
@@ -218,6 +343,8 @@ class Device
         case SONOFF_S31_LITE:
         case YJZK_SWITCH_1CH:
         case KMC_70011:
+        case SONOFF_DUAL:
+        case SONOFF_DUAL_R2:
         case SONOFF_T1_1CH: {
             ledPin = D7;
             break;
@@ -256,7 +383,10 @@ class Device
       // ledPinInverse
       switch (device) {
         case WORKCHOICE_ECOPLUG:
+        case ELECTRODRAGON_WIFI_IOT:
         case OPENENERGYMONITOR_MQTT_RELAY:
+        case YJZK_SWITCH_3CH:
+        case YJZK_SWITCH_2CH:
         case YJZK_SWITCH_1CH: {
             ledPinInverse = 0;
             break;
@@ -268,13 +398,47 @@ class Device
       }
     }
 
-    int getRelayPin() {
-      return this->relayPin;
+    int getRelayPin(int ch) {
+      switch (ch) {
+        case 1: {
+            return this->relay1Pin;
+          }
+        case 2: {
+            return this->relay2Pin;
+          }
+        case 3: {
+            return this->relay3Pin;
+          }
+        case 4: {
+            return this->relay4Pin;
+          }
+        default: {
+            return this->relay1Pin;
+          }
+      }
+
     }
 
-    int getSwitchPin() {
-      return this->switchPin;
+    int getSwitchPin(int ch) {
+      switch (ch) {
+        case 1: {
+            return this->switch1Pin;
+          }
+        case 2: {
+            return this->switch2Pin;
+          }
+        case 3: {
+            return this->switch3Pin;
+          }
+        case 4: {
+            return this->switch4Pin;
+          }
+        default: {
+            return this->switch1Pin;
+          }
+      }
     }
+
     int getLedPin() {
       return this->ledPin;
     }
@@ -282,8 +446,6 @@ class Device
     int getLedPinInverse() {
       return this->ledPinInverse;
     }
-
-
 };
 
 String deviceJSON(int id, String label) {
@@ -317,7 +479,17 @@ String getDeviceJson() {
          deviceJSON(ISELECTOR_SM_PW702U, "ISELECTOR SM PW702U") + "," +
          deviceJSON(KMC_70011, "KMC 70011") + "," +
          deviceJSON(EUROMATE_WIFI_STECKER_SCHUKO, "EUROMATE WIFI STECKER SCHUKO") + "," +
-         deviceJSON(NODEMCU_LOLIN, "LINGAN SWA1")
+         deviceJSON(NODEMCU_LOLIN, "LINGAN SWA1") + "," +
+         deviceJSON(SONOFF_DUAL, "SONOFF DUAL") + "," +
+         deviceJSON(SONOFF_DUAL_R2, "SONOFF DUAL R2") + "," +
+         deviceJSON(SONOFF_T1_2CH, "SONOFF T1 2CH") + "," +
+         deviceJSON(ELECTRODRAGON_WIFI_IOT, "ELECTRODRAGON WIFI IOT") + "," +
+         deviceJSON(YJZK_SWITCH_2CH, "YJZK SWITCH 2CH") + "," +
+         deviceJSON(SONOFF_T1_3CH, "SONOFF T1 3CH") + "," +
+         deviceJSON(YJZK_SWITCH_3CH, "YJZK SWITCH 3CH") + "," +
+         deviceJSON(SONOFF_4CH, "SONOFF 4CH") + "," +
+         deviceJSON(SONOFF_4CH_PRO, "SONOFF 4CH PRO") + "," +
+         deviceJSON(ITEAD_SONOFF_IFAN02, "SONOFF IFAN02")
          + "]";
 }
 #endif /* Device_h */

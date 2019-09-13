@@ -28,8 +28,12 @@ class Storage
       int ledPin;
       int ledPinInverse;
       int externalSwitchState;
+      char callback[256];
+      int seq;
+      char hubHost[256];
+      int hubPort;
       char signature[3];
-    } Configuration13106;
+    } Configuration13107;
 
     typedef struct
     {
@@ -38,10 +42,22 @@ class Storage
       char smartThingsUrl[128];
       char applicationId[128];
       char accessToken[128];
-      int  defaultState;// boot state of relay: 0-off,1-on,2-last,3-smartthings
-      bool lastState;// last state of relay
-      int relayPin;
-      int switchPin;
+      int  defaultState1;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      int  defaultState2;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      int  defaultState3;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      int  defaultState4;// boot state of relay: 0-off,1-on,2-last,3-smartthings
+      bool lastState1;// last state of relay
+      bool lastState2;// last state of relay
+      bool lastState3;// last state of relay
+      bool lastState4;// last state of relay
+      int relay1Pin;
+      int switch1Pin;
+      int relay2Pin;
+      int switch2Pin;
+      int relay3Pin;
+      int switch3Pin;
+      int relay4Pin;
+      int switch4Pin;
       int externalSwitchPin;
       int ledPin;
       int ledPinInverse;
@@ -51,18 +67,30 @@ class Storage
       char hubHost[256];
       int hubPort;
       char signature[3];
-    } Configuration13107;
+    } Configuration13108;
 
-    Configuration13107 configuration {
+    Configuration13108 configuration {
       13,
-      107,
+      108,
       "",
       "",
       "",
       0,
+      0,
+      0,
+      0,
+      false,
+      false,
+      false,
       false,
       12,
       0,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
       -1,
       13,
       1,
@@ -126,44 +154,6 @@ class Storage
         Serial.println ( "storage version " + String(storageVersion) );
 
 
-        if (storageVersion == 106) {
-          Configuration13106 readConfiguration {
-            13,
-            107,
-            "",
-            "",
-            "",
-            0,
-            false,
-            12,
-            0,
-            -1,
-            13,
-            1,
-            LOW,
-            "BD"
-          };
-          //  loadStruct(&readConfiguration, sizeof(readConfiguration));
-          Serial.println ( "Storage loaded" );
-          if (String(readConfiguration.signature) == String("OK")) {
-            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
-            strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
-            strcpy(configuration.applicationId, readConfiguration.applicationId);
-            strcpy(configuration.accessToken, readConfiguration.accessToken);
-            configuration.defaultState = readConfiguration.defaultState;
-            configuration.lastState = readConfiguration.lastState;
-            configuration.relayPin = readConfiguration.relayPin;
-            configuration.switchPin = readConfiguration.switchPin;
-            configuration.externalSwitchPin = readConfiguration.externalSwitchPin;
-            configuration.ledPin = readConfiguration.ledPin;
-            configuration.externalSwitchState = readConfiguration.externalSwitchState;
-            configuration.ledPinInverse = readConfiguration.ledPinInverse;
-            configuration.seq = 0;
-            save();
-          } else {
-            Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
-          }
-        }
         if (storageVersion == 107) {
           Configuration13107 readConfiguration {
             13,
@@ -183,12 +173,71 @@ class Storage
             0,
             "",
             -1,
+            "OK"
+          };
+            loadStruct(&readConfiguration, sizeof(readConfiguration));
+          Serial.println ( "Storage loaded" );
+          if (String(readConfiguration.signature) == String("OK")) {
+            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
+            strcpy(configuration.smartThingsUrl, readConfiguration.smartThingsUrl);
+            strcpy(configuration.applicationId, readConfiguration.applicationId);
+            strcpy(configuration.accessToken, readConfiguration.accessToken);
+            configuration.defaultState1 = readConfiguration.defaultState;
+            configuration.lastState1 = readConfiguration.lastState;
+            configuration.relay1Pin = readConfiguration.relayPin;
+            configuration.switch1Pin = readConfiguration.switchPin;
+            configuration.relay2Pin = -1;
+            configuration.switch2Pin = -1;
+            configuration.relay3Pin = -1;
+            configuration.switch3Pin = -1;
+            configuration.relay4Pin = -1;
+            configuration.switch4Pin = -1;
+            configuration.externalSwitchPin = readConfiguration.externalSwitchPin;
+            configuration.ledPin = readConfiguration.ledPin;
+            configuration.externalSwitchState = readConfiguration.externalSwitchState;
+            configuration.ledPinInverse = readConfiguration.ledPinInverse;
+            save();
+          } else {
+            Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
+          }
+        }
+        if (storageVersion == 108) {
+          Configuration13108 readConfiguration {
+            13,
+            108,
+            "",
+            "",
+            "",
+            0,
+            0,
+            0,
+            0,
+            false,
+            false,
+            false,
+            false,
+            12,
+            0,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            13,
+            1,
+            LOW,
+            "",
+            0,
+            "",
+            -1,
             "BD"
           };
           loadStruct(&readConfiguration, sizeof(readConfiguration));
           Serial.println ( "Storage loaded" );
           if (String(readConfiguration.signature) == String("OK")) {
-            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
+            Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature));
             this->configuration = readConfiguration;
           } else {
             Serial.println ( "Configuration inValid: " + String(readConfiguration.signature));
@@ -232,40 +281,189 @@ class Storage
       accessToken.toCharArray(configuration.accessToken, accessToken.length() + 1);
     }
 
-    int getDefaultState() {
-      return configuration.defaultState;
+    int getDefaultState(int ch) {
+      switch (ch) {
+        case 1: {
+            return configuration.defaultState1;
+          }
+        case 2: {
+            return configuration.defaultState2;
+          }
+        case 3: {
+            return configuration.defaultState3;
+          }
+        case 4: {
+            return configuration.defaultState4;
+          }
+        default: {
+            return configuration.defaultState1;
+          }
+      }
+
     }
 
-    void setDefaultState(int defaultState) {
-      configuration.defaultState = defaultState;
+    void setDefaultState(int ch, int defaultState) {
+      switch (ch) {
+        case 1: {
+            configuration.defaultState1 = defaultState;
+            break;
+          }
+        case 2: {
+            configuration.defaultState2 = defaultState;
+            break;
+          }
+        case 3: {
+            configuration.defaultState3 = defaultState;
+            break;
+          }
+        case 4: {
+            configuration.defaultState4 = defaultState;
+            break;
+          }
+        default: {
+            configuration.defaultState1 = defaultState;
+          }
+      }
     }
 
-    bool getLastState() {
-      return configuration.lastState;
+    bool getLastState(int ch) {
+      switch (ch) {
+        case 1: {
+            return configuration.lastState1;
+          }
+        case 2: {
+            return configuration.lastState2;
+          }
+        case 3: {
+            return configuration.lastState3;
+          }
+        case 4: {
+            return configuration.lastState4;
+          }
+        default: {
+            return configuration.lastState1;
+          }
+      }
     }
 
-    void setLastState(bool lastState) {
-      configuration.lastState = lastState;
+    void setLastState(int ch, bool lastState) {
+      switch (ch) {
+        case 1: {
+            configuration.lastState1 = lastState;
+            break;
+          }
+        case 2: {
+            configuration.lastState2 = lastState;
+            break;
+          }
+        case 3: {
+            configuration.lastState3 = lastState;
+            break;
+          }
+        case 4: {
+            configuration.lastState4 = lastState;
+            break;
+          }
+        default: {
+            configuration.lastState1 = lastState;
+          }
+      }
     }
 
     bool isValid() {
       return String(configuration.signature) == String("OK");
     }
 
-    int getRelayPin() {
-      return configuration.relayPin;
+
+    int getRelayPin(int ch) {
+      switch (ch) {
+        case 1: {
+            return configuration.relay1Pin;
+          }
+        case 2: {
+            return configuration.relay2Pin;
+          }
+        case 3: {
+            return configuration.relay3Pin;
+          }
+        case 4: {
+            return configuration.relay4Pin;
+          }
+        default: {
+            return configuration.relay1Pin;
+          }
+      }
+
     }
 
-    void setRelayPin(int relayPin) {
-      configuration.relayPin = relayPin;
+    void setRelayPin(int ch, int relayPin) {
+      switch (ch) {
+        case 1: {
+            configuration.relay1Pin = relayPin;
+            break;
+          }
+        case 2: {
+            configuration.relay2Pin = relayPin;
+            break;
+          }
+        case 3: {
+            configuration.relay3Pin = relayPin;
+            break;
+          }
+        case 4: {
+            configuration.relay4Pin = relayPin;
+            break;
+          }
+        default: {
+            configuration.relay1Pin = relayPin;
+          }
+      }
+
     }
 
-    int getSwitchPin() {
-      return configuration.switchPin;
+    int getSwitchPin(int ch) {
+      switch (ch) {
+        case 1: {
+            return configuration.switch1Pin;
+          }
+        case 2: {
+            return configuration.switch2Pin;
+          }
+        case 3: {
+            return configuration.switch3Pin;
+          }
+        case 4: {
+            return configuration.switch4Pin;
+          }
+        default: {
+            return configuration.switch1Pin;
+          }
+      }
     }
 
-    void setSwitchPin(int switchPin) {
-      configuration.switchPin = switchPin;
+    void setSwitchPin(int ch, int switchPin) {
+      switch (ch) {
+        case 1: {
+            configuration.switch1Pin = switchPin;
+            break;
+          }
+        case 2: {
+            configuration.switch2Pin = switchPin;
+            break;
+          }
+        case 3: {
+            configuration.switch3Pin = switchPin;
+            break;
+          }
+        case 4: {
+            configuration.switch4Pin = switchPin;
+            break;
+          }
+        default: {
+            configuration.switch1Pin = switchPin;
+          }
+      }
+
     }
 
     int getExternalSwitchPin() {

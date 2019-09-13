@@ -56,51 +56,53 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   ticker.attach(0.2, tick);
 }
 
-void switchOff() {
-  switchOff(false);
+
+void switchOff(int ch) {
+  switchOff(ch, false);
 }
 
-void relayOn() {
-  sonoff.getRelay()->on();
+void relayOn(int ch) {
+  sonoff.relayOn(ch);
   digitalWrite ( sonoff.getLed(), storage.getLedInverse() == 0 ? 1 : 0 );
 }
 
 
 
-void relayOff() {
-  sonoff.getRelay()->off();
+void relayOff(int ch) {
+  sonoff.relayOff(ch);
   digitalWrite ( sonoff.getLed(), storage.getLedInverse() == 0 ? 0 : 1 );
 }
 
 
-void sw(boolean relayState) {
+void sw(int ch, boolean relayState) {
   if (relayState) {
-    relayOn();
+    relayOn(ch);
   } else {
-    relayOff();
+    relayOff(ch);
   }
-  storage.setLastState(relayState);
+  storage.setLastState(ch, relayState);
   storage.save();
 }
 
-void switchOn(boolean force) {
-
-  if (force || !sonoff.getRelay()->isOn()) {
-    sw(true);
+void switchOn(int ch, boolean force) {
+  if (sonoff.getRelayStatus(ch) > -1) {
+    if (force || !sonoff.getRelayStatus(ch)) {
+      sw(ch, true);
+    }
+    smartThings.updateStates();
   }
-  smartThings.on(force);
+
 
 }
 
-void switchOff(boolean force) {
-  if (force || (sonoff.getRelay()->isOn())) {
-    sw(false);
+void switchOff(int ch , boolean force) {
+  if (sonoff.getRelayStatus(ch) > -1) {
+    if (force || (sonoff.getRelayStatus(ch))) {
+      sw(ch, false);
+    }
+    smartThings.updateStates();
   }
-  smartThings.off(force);
-}
 
-int getSwitchState() {
-  return smartThings.getSwitchState();
 }
 
 
@@ -124,6 +126,7 @@ void handleSettings () {
   String callback = server.arg("callback");
   String hubHost = server.arg("hub_host");
   String hubPort = server.arg("hub_Port");
+  String channelString =  server.arg("ch");
 
   if (applicationId != String("")) {
     storage.setApplicationId(applicationId);
@@ -132,17 +135,32 @@ void handleSettings () {
     storage.setAccessToken(accessToken);
   }
 
-  if (defaultStateString != String("")) {
-    int defaultState = defaultStateString.toInt();
-    storage.setDefaultState(defaultState);
-  }
   if (deviceTypeString != String("")) {
     int value = deviceTypeString.toInt();
     Device device(value);
-    storage.setRelayPin(device.getRelayPin());
-    storage.setSwitchPin(device.getSwitchPin());
+    storage.setRelayPin(1, device.getRelayPin(2));
+    storage.setRelayPin(2, device.getRelayPin(2));
+    storage.setRelayPin(3, device.getRelayPin(3));
+    storage.setRelayPin(4, device.getRelayPin(4));
+    storage.setSwitchPin(1, device.getSwitchPin(1));
+    storage.setSwitchPin(2, device.getSwitchPin(2));
+    storage.setSwitchPin(3, device.getSwitchPin(3));
+    storage.setSwitchPin(4, device.getSwitchPin(4));
     storage.setLedPin(device.getLedPin());
   }
+
+  if (channelString == String("")) {
+    channelString = "1";
+  }
+  if (channelString != String("")) {
+    int ch = channelString.toInt();
+    if (defaultStateString != String("")) {
+      int defaultState = defaultStateString.toInt();
+      storage.setDefaultState(ch, defaultState);
+    }
+  }
+
+
   if (externalSwitchStateString != String("")) {
     int value = externalSwitchStateString.toInt();
     storage.setExternalSwitchState(value);
@@ -177,21 +195,38 @@ void handleSubscription() {
 }
 
 void handleOn () {
-  switchOn(false);
-  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\" }" );
+  int ch = 1;
+  String channelString = server.arg("ch");
+  if (channelString != String("")) {
+    ch = channelString.toInt();
+  }
+  switchOn(ch, false);
+  server.send ( 200, "application/json", "{ \"relay\": \"on\", \"ip\":\"" + IpAddress2String( WiFi.localIP())
+                + "\",\"mac\":\"" + String(WiFi.macAddress()) + "\",\"channel\":" + String(ch) + " }" );
 }
 
 
 void handleOff () {
-  switchOff(false);
-  server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP()) + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + "\"  }" );
+  int ch = 1;
+  String channelString = server.arg("ch");
+  if (channelString != String("")) {
+    ch = channelString.toInt();
+  }
+  switchOff(ch, false);
+  server.send ( 200, "application/json", "{ \"relay\": \"off\", \"ip\":\"" + IpAddress2String( WiFi.localIP())
+                + "\" ,\"mac\":\"" + String(WiFi.macAddress()) + + "\",\"channel\":" + String(ch) + " }" );
 }
 
 void handleInfo () {
-  String payload = smartThings.getSmartThingsDevice();
   server.send ( 200, "application/json",
-                "{ \"relay\": \""
-                + String(sonoff.getRelay()->isOn() ? "on" : "off")
+                "{ \"relay1\": \""
+                + String(sonoff.getRelayStatusAsString(1))
+                + "\" , \"relay2\": \""
+                + String(sonoff.getRelayStatusAsString(2))
+                + "\" , \"relay3\": \""
+                + String(sonoff.getRelayStatusAsString(3))
+                + "\" , \"relay4\": \""
+                + String(sonoff.getRelayStatusAsString(4))
                 + "\",\"uptime\":" +
                 String(millis()) +
                 ", \"ssid\": \""
@@ -208,33 +243,57 @@ void handleInfo () {
                 //                + String(storage.getAccessToken())
                 //                + "\", \"smartThingsUrl\":\""
                 //                + String(storage.getSmartThingsUrl())
-                + "\", \"smartthings\":"
-                + String(payload)
-                + ", \"buttonState\":\""
+                + "\", \"buttonState\":\""
                 + String(sonoff.IsButtonOn())
                 + "\",\"supportedDevices\":"
                 + getDeviceJson()
                 + ", \"versionFirmware\":\""
                 + String(storage.getPackageVersion()) + "." + String(storage.getStorageVersion())
-                + "\", \"relayPin\":"
-                + String(storage.getRelayPin())
-                + ", \"switchPin\":"
-                + String(storage.getSwitchPin())
+                + "\", \"relayPin1\":"
+                + String(storage.getRelayPin(1))
+                + ", \"switchPin1\":"
+                + String(storage.getSwitchPin(1))
+                + "\", \"relayPin2\":"
+                + String(storage.getRelayPin(2))
+                + ", \"switchPin2\":"
+                + String(storage.getSwitchPin(2))
+                + "\", \"relayPin3\":"
+                + String(storage.getRelayPin(3))
+                + ", \"switchPin3\":"
+                + String(storage.getSwitchPin(3))
+                + "\", \"relayPin4\":"
+                + String(storage.getRelayPin(4))
+                + ", \"switchPin4\":"
+                + String(storage.getSwitchPin(4))
                 + ", \"externalSwitchPin\":"
                 + String(storage.getExternalSwitchPin())
                 + ", \"ledPin\":"
                 + String(storage.getLedPin())
                 + ", \"externalSwitchState\":"
                 + String(storage.getExternalSwitchState())
-                + ", \"defaultState\":"
-                + String(storage.getDefaultState())
+                + ", \"defaultState1\":"
+                + String(storage.getDefaultState(1))
+                + ", \"defaultState2\":"
+                + String(storage.getDefaultState(2))
+                + ", \"defaultState3\":"
+                + String(storage.getDefaultState(3))
+                + ", \"defaultState4\":"
+                + String(storage.getDefaultState(4))
                 + " }");
   smartThings.smartthingsInit();
 }
 
 void handleRoot() {
-  String payload = smartThings.getSmartThingsDevice();
-  server.send ( 200, "application/json", payload );
+  String payload1 = smartThings.getSmartThingsDevice(1);
+  String payload2 = smartThings.getSmartThingsDevice(2);
+  String payload3 = smartThings.getSmartThingsDevice(3);
+  String payload4 = smartThings.getSmartThingsDevice(4);
+  server.send ( 200, "application/json",
+                "[ \"channel1\": " + String(payload1) + ","
+                + "\"channel2\": " + String(payload2) + ","
+                + "\"channel3\": " + String(payload3) + ","
+                + "\"channel4\": " + String(payload4) +
+                "]" );
 }
 
 void handleNotFound() {
@@ -256,7 +315,6 @@ void handleNotFound() {
 
 void setup ( void ) {
   storage.load();
-  storage.save();
   pinMode ( sonoff.getLed(), OUTPUT );
   Serial.begin ( 9600 );
   ticker.attach(0.6, tick);
@@ -311,39 +369,38 @@ void setup ( void ) {
   SSDP2.setDeviceType(ssdpDeviceType);
   SSDP2.begin();
   Serial.println ( "SSDP2 server started" );
-  int defaultState = storage.getDefaultState();
-  bool lastState = storage.getLastState();
-
-  Serial.println ( "storage.getDefaultState() = " + String(defaultState));
-  Serial.println ( "configuration.lastState = " + String(lastState) );
   Serial.println("HTTPUpdateServer ready! Open http://" + String(IpAddress2String( WiFi.localIP())) + "/update in your browser");
   sonoff.setup();
   smartThings.subscribe();
 
-  if (defaultState == 1) {
-    switchOn(true);
-  } else if (defaultState == 2) {
-    if (lastState) {
-      switchOn(true);
-    } else {
-      switchOff(true);
-    }
-  } else if (defaultState == 3) {
-    int sthStatus = getSwitchState();
-    if (sthStatus == 0) {
-      switchOff(true);
-    } else if (sthStatus == 1) {
-      switchOn(true);
-    } else {
+  for (int i = 1; i <= 4; i++) {
+    int defaultState = storage.getDefaultState(i);
+    bool lastState = storage.getLastState(i);
+    if (defaultState == 1) {
+      switchOn(i, true);
+    } else if (defaultState == 2) {
       if (lastState) {
-        switchOn(true);
+        switchOn(i, true);
       } else {
-        switchOff(true);
+        switchOff(i, true);
       }
-    }
+    } else if (defaultState == 3) {
+      int sthStatus = smartThings.getSwitchState(i);
+      if (sthStatus == 0) {
+        switchOff(i, true);
+      } else if (sthStatus == 1) {
+        switchOn(i, true);
+      } else {
+        if (lastState) {
+          switchOn(i, true);
+        } else {
+          switchOff(i, true);
+        }
+      }
 
-  } else {
-    switchOff(true);
+    } else {
+      switchOff(i, true);
+    }
   }
 
   int seq = storage.getSeq();
@@ -361,17 +418,19 @@ void loop ( void ) {
   boolean buttonState = sonoff.IsButtonOn();
   if (sonoff.IsButtonChanged()) {
     if (buttonState) {
-      switchOn(true);
+      switchOn(1,true);
     } else {
-      switchOff(true);
+      switchOff(1,true);
     }
   }
-  if (sonoff.getSwitch()->getEvent() == SWITCH_EVENT_ON) {
-    if (sonoff.getRelay()->isOn()) {
-      switchOff(true);
-    }
-    else {
-      switchOn(true);
+  for (int i = 1; i <= 4; i++) {
+    if (sonoff.getSwitchEvent(i) == SWITCH_EVENT_ON) {
+      if (sonoff.getRelayStatus(i) == 1) {
+        switchOff(i, true);
+      }
+      else if (sonoff.getRelayStatus(i) == 0) {
+        switchOn(i, true);
+      }
     }
   }
 }

@@ -80,7 +80,7 @@ class SmartThings
 
     Sonoff* sonoff;
     Storage* storage;
-    void changeState(String operation, boolean force) {
+    void changeState() {
       sendDirectlyData("{}");
     }
   public:
@@ -91,16 +91,16 @@ class SmartThings
       //this->storage2 = (Storage *) storage;
     }
 
-    void on(boolean force) {
-      changeState("on", force);
+    void updateStates() {
+      changeState();
     }
 
-    int getSwitchState() {
-      return getSmartThingsDeviceState().state;
+    int getSwitchState(int ch) {
+      return getSmartThingsDeviceState(ch).state;
     }
 
 
-    SmartThingDevice getSmartThingsDeviceState() {
+    SmartThingDevice getSmartThingsDeviceState(int ch) {
       SmartThingDevice smartThingsDevice{
         -1,
         ""
@@ -112,7 +112,8 @@ class SmartThings
                      + String(storage->getApplicationId())
                      + "/get/info?access_token=" + String(storage->getAccessToken()
                          + "&ip=" + IpAddress2String( WiFi.localIP())
-                         + "&mac=" + String(WiFi.macAddress()));
+                         + "&mac=" + String(WiFi.macAddress())
+                         + "&ch=" + String(ch));
         Serial.println ( "Starting SmartThings Http current : " + url );
         http.beginInternal2(url, "https");
         http.addHeader("Content-Type", "application/json");
@@ -139,7 +140,7 @@ class SmartThings
       return smartThingsDevice;
     }
 
-    String getSmartThingsDevice() {
+    String getSmartThingsDevice(int ch) {
       String payload = "{}";
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
@@ -147,7 +148,8 @@ class SmartThings
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
                      + String(storage->getApplicationId())
                      + "/get/info?access_token=" + String(storage->getAccessToken()
-                         + "&ip=" + IpAddress2String( WiFi.localIP())
+                         + "&ip=" + IpAddress2String( WiFi.localIP()) +
+                         + "&ch=" + String(ch) +
                          + "&mac=" + String(WiFi.macAddress()));
         Serial.println ( "Starting SmartThings Http current : " + url );
         http.beginInternal2(url, "https");
@@ -189,13 +191,9 @@ class SmartThings
 
     }
 
-    void off(boolean force) {
-      changeState("off", force);
-    }
-
     void sendDirectlyData(String data) {
       HTTPClient http;
-      http.begin("http://192.100.200.83:39500/notify");
+      http.begin(storage->getCallBack());
       http.addHeader("Content-Type", "application/json");
       http.POST("{\"ip\":\""
                 + IpAddress2String( WiFi.localIP())
@@ -203,8 +201,14 @@ class SmartThings
                 + String(WiFi.macAddress())
                 + "\",\"data\":"
                 + String(data)
-                + ", \"relay\": \""
-                + String(sonoff->getRelay()->isOn() ? "on" : "off")
+                + ", \"relay1\": \""
+                + String(sonoff->getRelayStatusAsString(1))
+                + ", \"relay2\": \""
+                + String(sonoff->getRelayStatusAsString(2))
+                + ", \"relay3\": \""
+                + String(sonoff->getRelayStatusAsString(3))
+                + ", \"relay4\": \""
+                + String(sonoff->getRelayStatusAsString(4))
                 + "\"}");
       http.end();
     }
@@ -222,7 +226,10 @@ class SmartThings
                      + "/" + "init?access_token=" + String(storage->getAccessToken()
                          + "&ip=" + IpAddress2String( WiFi.localIP())
                          + "&mac=" + String(WiFi.macAddress())
-                         + "&relay=" + String(sonoff->getRelay()->isOn() ? "on" : "off")
+                         + "&relay1=" + String(sonoff->getRelayStatusAsString(1)) +
+                         + "&relay2=" + String(sonoff->getRelayStatusAsString(2)) +
+                         + "&relay3=" + String(sonoff->getRelayStatusAsString(3)) +
+                         + "&relay4=" + String(sonoff->getRelayStatusAsString(4))
                                                           );
         Serial.println ( "Sending Http Get " + url );
         http.beginInternal2(url, "https");
