@@ -117,6 +117,39 @@ def parse(description) {
         def json = msg.json;
         if (json) {
             debug("Values received: ${json}")
+            if (json.action != null) {
+                if (json.relay1 == "on") {
+                    forceOn();
+                } else if (json.relay1 == "off") {
+                    forceOff();
+                }
+                if (json.ip) {
+                    setIp(json.ip);
+                }
+                if (json.action == "subscribe") {
+                    subscribeCommand();
+                }
+            } else {
+                if (json.relay == "on") {
+                    forceOn();
+                } else if (json.relay == "off") {
+                    forceOff();
+                }
+                if (json.ip) {
+                    setIp(json.ip);
+                }
+            }
+            if (json.data && json.data.cse7766) {
+                setPower(json.data.cse7766.activePower);
+            }
+
+        }
+    }
+
+    if (bodyString) {
+        def json = msg.json;
+        if (json) {
+            debug("Values received: ${json}")
             if (json.relay == "on") {
                 forceOn();
             } else if (json.relay == "off") {

@@ -1,4 +1,66 @@
-// #include "Sonoff.h"
+#ifndef Storage_h
+#define Storage_h
+
+// #define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:e:1:vassio"
+//#define SSDP_ONECHANEL_DEVICE_TYPE "urn:sonoff:device:1:vassio"
+//#define SSDP_2CHANEL_DEVICE_TYPE "urn:sonoff:device:2:vassio"
+//#define SSDP_3CHANEL_DEVICE_TYPE "urn:sonoff:device:3:vassio"
+#define SSDP_4CHANEL_DEVICE_TYPE "urn:sonoff:device:4:vassio"
+
+#ifdef SSDP_CSE776_DEVICE_TYPE
+#define DEFAULT_RELAY1  12
+#define DEFAULT_SWITCH1  0
+#define DEFAULT_RELAY2 -1
+#define DEFAULT_SWITCH2 -1
+#define DEFAULT_RELAY3  -1
+#define DEFAULT_SWITCH3  -1
+#define DEFAULT_RELAY4  -1
+#define DEFAULT_SWITCH4  -1
+#endif //SSDP_CSE776_DEVICE_TYPE
+
+#ifdef SSDP_ONECHANEL_DEVICE_TYPE
+#define DEFAULT_RELAY1  12
+#define DEFAULT_SWITCH1  0
+#define DEFAULT_RELAY2  -1
+#define DEFAULT_SWITCH2  -1
+#define DEFAULT_RELAY3  -1
+#define DEFAULT_SWITCH3  -1
+#define DEFAULT_RELAY4  -1
+#define DEFAULT_SWITCH4  -1
+#endif //SSDP_ONECHANEL_DEVICE_TYPE
+
+#ifdef SSDP_2CHANEL_DEVICE_TYPE
+#define DEFAULT_RELAY1  12
+#define DEFAULT_SWITCH1  0
+#define DEFAULT_RELAY2  5
+#define DEFAULT_SWITCH2  9
+#define DEFAULT_RELAY3  -1
+#define DEFAULT_SWITCH3  -1
+#define DEFAULT_RELAY4  -1
+#define DEFAULT_SWITCH4  -1
+#endif //SSDP_2CHANEL_DEVICE_TYPE
+
+#ifdef SSDP_3CHANEL_DEVICE_TYPE
+#define DEFAULT_RELAY1  12
+#define DEFAULT_SWITCH1  0
+#define DEFAULT_RELAY2  5
+#define DEFAULT_SWITCH2  9
+#define DEFAULT_RELAY3  4
+#define DEFAULT_SWITCH3  10
+#define DEFAULT_RELAY4  -1
+#define DEFAULT_SWITCH4  -1
+#endif //SSDP_3CHANEL_DEVICE_TYPE
+
+#ifdef SSDP_4CHANEL_DEVICE_TYPE
+#define DEFAULT_RELAY1  12
+#define DEFAULT_SWITCH1  0
+#define DEFAULT_RELAY2  5
+#define DEFAULT_SWITCH2  9
+#define DEFAULT_RELAY3  4
+#define DEFAULT_SWITCH3  10
+#define DEFAULT_RELAY4  15
+#define DEFAULT_SWITCH4  14
+#endif //SSDP_4CHANEL_DEVICE_TYPE
 
 class Storage
 {
@@ -83,14 +145,14 @@ class Storage
       false,
       false,
       false,
-      12,
-      0,
-      -1,
-      -1,
-      -1,
-      -1,
-      -1,
-      -1,
+      DEFAULT_RELAY1,
+      DEFAULT_SWITCH1,
+      DEFAULT_RELAY2,
+      DEFAULT_SWITCH2,
+      DEFAULT_RELAY3,
+      DEFAULT_SWITCH3,
+      DEFAULT_RELAY4,
+      DEFAULT_SWITCH4,
       -1,
       13,
       1,
@@ -175,7 +237,7 @@ class Storage
             -1,
             "OK"
           };
-            loadStruct(&readConfiguration, sizeof(readConfiguration));
+           loadStruct(&readConfiguration, sizeof(readConfiguration));
           Serial.println ( "Storage loaded" );
           if (String(readConfiguration.signature) == String("OK")) {
             Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));
@@ -216,14 +278,14 @@ class Storage
             false,
             false,
             false,
-            12,
-            0,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
+            DEFAULT_RELAY1,
+            DEFAULT_SWITCH1,
+            DEFAULT_RELAY2,
+            DEFAULT_SWITCH2,
+            DEFAULT_RELAY3,
+            DEFAULT_SWITCH3,
+            DEFAULT_RELAY4,
+            DEFAULT_SWITCH4,
             -1,
             13,
             1,
@@ -282,91 +344,55 @@ class Storage
     }
 
     int getDefaultState(int ch) {
-      switch (ch) {
-        case 1: {
-            return configuration.defaultState1;
-          }
-        case 2: {
-            return configuration.defaultState2;
-          }
-        case 3: {
-            return configuration.defaultState3;
-          }
-        case 4: {
-            return configuration.defaultState4;
-          }
-        default: {
-            return configuration.defaultState1;
-          }
+      if (ch == 1) {
+        return this->configuration.defaultState1;
+      } else if (ch == 2) {
+        return this->configuration.defaultState2;
+      } else if (ch == 3) {
+        return this->configuration.defaultState3;
+      } else if (ch == 4) {
+        return this->configuration.defaultState4;
+      } else {
+        return -1;
       }
 
     }
 
     void setDefaultState(int ch, int defaultState) {
-      switch (ch) {
-        case 1: {
-            configuration.defaultState1 = defaultState;
-            break;
-          }
-        case 2: {
-            configuration.defaultState2 = defaultState;
-            break;
-          }
-        case 3: {
-            configuration.defaultState3 = defaultState;
-            break;
-          }
-        case 4: {
-            configuration.defaultState4 = defaultState;
-            break;
-          }
-        default: {
-            configuration.defaultState1 = defaultState;
-          }
+      if (ch == 1) {
+        this->configuration.defaultState1 = defaultState;
+      } else if (ch == 2) {
+        this->configuration.defaultState2 = defaultState;
+      } else if (ch == 3) {
+        this->configuration.defaultState3 = defaultState;
+      } else if (ch == 4) {
+        this->configuration.defaultState4 = defaultState;
       }
     }
 
     bool getLastState(int ch) {
-      switch (ch) {
-        case 1: {
-            return configuration.lastState1;
-          }
-        case 2: {
-            return configuration.lastState2;
-          }
-        case 3: {
-            return configuration.lastState3;
-          }
-        case 4: {
-            return configuration.lastState4;
-          }
-        default: {
-            return configuration.lastState1;
-          }
+      if (ch == 1) {
+        return this->configuration.lastState1;
+      } else if (ch == 2) {
+        return this->configuration.lastState2;
+      } else if (ch == 3) {
+        return this->configuration.lastState3;
+      } else if (ch == 4) {
+        return this->configuration.lastState4;
+      } else {
+        return -1;
       }
     }
 
     void setLastState(int ch, bool lastState) {
-      switch (ch) {
-        case 1: {
-            configuration.lastState1 = lastState;
-            break;
-          }
-        case 2: {
-            configuration.lastState2 = lastState;
-            break;
-          }
-        case 3: {
-            configuration.lastState3 = lastState;
-            break;
-          }
-        case 4: {
-            configuration.lastState4 = lastState;
-            break;
-          }
-        default: {
-            configuration.lastState1 = lastState;
-          }
+      if (ch == 1) {
+        this->configuration.lastState1 = lastState;
+      } else if (ch == 2) {
+        this->configuration.lastState2 = lastState;
+      } else if (ch == 3) {
+        this->configuration.lastState3 = lastState;
+      } else if (ch == 4) {
+        this->configuration.lastState4 = lastState;
       }
     }
 
@@ -376,94 +402,56 @@ class Storage
 
 
     int getRelayPin(int ch) {
-      switch (ch) {
-        case 1: {
-            return configuration.relay1Pin;
-          }
-        case 2: {
-            return configuration.relay2Pin;
-          }
-        case 3: {
-            return configuration.relay3Pin;
-          }
-        case 4: {
-            return configuration.relay4Pin;
-          }
-        default: {
-            return configuration.relay1Pin;
-          }
+      if (ch == 1) {
+        return this->configuration.relay1Pin;
+      } else if (ch == 2) {
+        return this->configuration.relay2Pin;
+      } else if (ch == 3) {
+        return this->configuration.relay3Pin;
+      } else if (ch == 4) {
+        return this->configuration.relay4Pin;
+      } else {
+        return -1;
       }
 
     }
 
     void setRelayPin(int ch, int relayPin) {
-      switch (ch) {
-        case 1: {
-            configuration.relay1Pin = relayPin;
-            break;
-          }
-        case 2: {
-            configuration.relay2Pin = relayPin;
-            break;
-          }
-        case 3: {
-            configuration.relay3Pin = relayPin;
-            break;
-          }
-        case 4: {
-            configuration.relay4Pin = relayPin;
-            break;
-          }
-        default: {
-            configuration.relay1Pin = relayPin;
-          }
+      if (ch == 1) {
+        this->configuration.relay1Pin = relayPin;
+      } else if (ch == 2) {
+        this->configuration.relay2Pin = relayPin;
+      } else if (ch == 3) {
+        this->configuration.relay3Pin = relayPin;
+      } else if (ch == 4) {
+        this->configuration.relay4Pin = relayPin;
       }
-
     }
 
     int getSwitchPin(int ch) {
-      switch (ch) {
-        case 1: {
-            return configuration.switch1Pin;
-          }
-        case 2: {
-            return configuration.switch2Pin;
-          }
-        case 3: {
-            return configuration.switch3Pin;
-          }
-        case 4: {
-            return configuration.switch4Pin;
-          }
-        default: {
-            return configuration.switch1Pin;
-          }
+      if (ch == 1) {
+        return this->configuration.switch1Pin;
+      } else if (ch == 2) {
+        return this->configuration.switch2Pin;
+      } else if (ch == 3) {
+        return this->configuration.switch3Pin;
+      } else if (ch == 4) {
+        return this->configuration.switch4Pin;
+      } else {
+        return -1;
       }
     }
 
     void setSwitchPin(int ch, int switchPin) {
-      switch (ch) {
-        case 1: {
-            configuration.switch1Pin = switchPin;
-            break;
-          }
-        case 2: {
-            configuration.switch2Pin = switchPin;
-            break;
-          }
-        case 3: {
-            configuration.switch3Pin = switchPin;
-            break;
-          }
-        case 4: {
-            configuration.switch4Pin = switchPin;
-            break;
-          }
-        default: {
-            configuration.switch1Pin = switchPin;
-          }
+      if (ch == 1) {
+        this->configuration.switch1Pin = switchPin;
+      } else if (ch == 2) {
+        this->configuration.switch2Pin = switchPin;
+      } else if (ch == 3) {
+        this->configuration.switch3Pin = switchPin;
+      } else if (ch == 4) {
+        this->configuration.switch4Pin = switchPin;
       }
-
     }
 
     int getExternalSwitchPin() {
@@ -533,3 +521,4 @@ class Storage
     }
 
 };
+#endif /* Storage_h */

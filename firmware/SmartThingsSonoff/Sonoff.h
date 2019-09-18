@@ -36,114 +36,125 @@ class Sonoff
     Switch* sw3;
     Switch* sw4;
 
-//    Relay* getRelay(int ch) {
-//      switch (ch) {
-//        case 1: {
-//            return this->relay1;
-//          }
-//        case 2: {
-//            return this->relay2;
-//          }
-//        case 3: {
-//            return this->relay3;
-//          }
-//        case 4: {
-//            return this->relay4;
-//          }
-//        default: {
-//            return this->relay1;
-//          }
-//      }
-//
-//    }
-//
-//    Switch* getSwitch(int ch) {
-//      switch (ch) {
-//        case 1: {
-//            return this->sw1;
-//          }
-//        case 2: {
-//            return this->sw2;
-//          }
-//        case 3: {
-//            return this->sw3;
-//          }
-//        case 4: {
-//            return this->sw4;
-//          }
-//        default: {
-//            return this->sw1;
-//          }
-//      }
-//    }
+    //    Relay* getRelay(int ch) {
+    //      switch (ch) {
+    //        case 1: {
+    //            return this->relay1;
+    //          }
+    //        case 2: {
+    //            return this->relay2;
+    //          }
+    //        case 3: {
+    //            return this->relay3;
+    //          }
+    //        case 4: {
+    //            return this->relay4;
+    //          }
+    //        default: {
+    //            return this->relay1;
+    //          }
+    //      }
+    //
+    //    }
+    //
+    //    Switch* getSwitch(int ch) {
+    //      switch (ch) {
+    //        case 1: {
+    //            return this->sw1;
+    //          }
+    //        case 2: {
+    //            return this->sw2;
+    //          }
+    //        case 3: {
+    //            return this->sw3;
+    //          }
+    //        case 4: {
+    //            return this->sw4;
+    //          }
+    //        default: {
+    //            return this->sw1;
+    //          }
+    //      }
+    //    }
 
   public:
 
     Sonoff(Storage* storage ) {
       this->storage = storage;
+    }
+
+    void init() {
       if (storage->getRelayPin(1) > -1) {
-        this->relay1 = new Relay( storage->getRelayPin(1), 0.4, 500, 25000);
+        Serial.println ( "created relay pin 1 " + String(storage->getRelayPin(1)) );
+        this->relay1 = new Relay( storage->getRelayPin(1));
       }
       if (storage->getSwitchPin(1) > -1) {
-        this->sw1 =  new Switch( storage->getSwitchPin(1), 2, 5);
+        Serial.println ( "created switch pin 1 " + String(storage->getSwitchPin(1)) );
+        this->sw1 =  new Switch( storage->getSwitchPin(1), false, 2, 5);
       }
 
       if (storage->getRelayPin(2) > -1) {
-        this->relay2 = new Relay( storage->getRelayPin(2), 0.4, 500, 25000);
+                Serial.println ( "created relay pin 2 " + String(storage->getRelayPin(2)) );  
+        this->relay2 = new Relay( storage->getRelayPin(2));
+        Serial.println ( "created relay pin 3 " + String(storage->getRelayPin(3)) );
       }
       if (storage->getSwitchPin(2) > -1) {
-        this->sw2 =  new Switch( storage->getSwitchPin(2), 2, 5);
+        this->sw2 =  new Switch( storage->getSwitchPin(2), false, 2, 5);
       }
 
       if (storage->getRelayPin(3) > -1) {
-        this->relay3 = new Relay( storage->getRelayPin(3), 0.4, 500, 25000);
+        this->relay3 = new Relay( storage->getRelayPin(3));
       }
       if (storage->getSwitchPin(3) > -1) {
-        this->sw3 =  new Switch( storage->getSwitchPin(3), 2, 5);
+        this->sw3 =  new Switch( storage->getSwitchPin(3), false, 2, 5);
       }
 
       if (storage->getRelayPin(4) > -1) {
-        this->relay4 = new Relay( storage->getRelayPin(4), 0.4, 500, 25000);
+        this->relay4 = new Relay( storage->getRelayPin(4));
       }
       if (storage->getSwitchPin(4) > -1) {
-        this->sw4 =  new Switch( storage->getSwitchPin(4), 2, 5);
+        this->sw4 =  new Switch( storage->getSwitchPin(4), false, 2, 5);
       }
     }
 
     void loop() {
-      if (storage->getRelayPin(1) > -1) {
-        relay1->loop();
+      if ( this->storage->getRelayPin(1) > -1) {
+        // Serial.println ( "relay 1 loop" );
+        this->relay1->loop();
       }
-      if (storage->getSwitchPin(1) > -1) {
-        sw1->loop();
-      }
-
-      if (storage->getRelayPin(2) > -1) {
-        relay2->loop();
-      }
-      if (storage->getSwitchPin(2) > -1) {
-        sw2->loop();
+      if ( this->storage->getSwitchPin(1) > -1) {
+        //Serial.println ( "switch 1 loop" );
+        this->sw1->loop();
       }
 
-      if (storage->getRelayPin(3) > -1) {
-        relay3->loop();
+      if ( this->storage->getRelayPin(2) > -1) {
+        this->relay2->loop();
       }
-      if (storage->getSwitchPin(3) > -1) {
-        sw3->loop();
+      if ( this->storage->getSwitchPin(2) > -1) {
+        this->sw2->loop();
       }
 
-      if (storage->getRelayPin(4) > -1) {
-        relay4->loop();
+      if ( this->storage->getRelayPin(3) > -1) {
+        this->relay3->loop();
       }
-      if (storage->getSwitchPin(4) > -1) {
-        sw4->loop();
+      if ( this->storage->getSwitchPin(3) > -1) {
+        this->sw3->loop();
       }
+
+      if ( this->storage->getRelayPin(4) > -1) {
+        this->relay4->loop();
+      }
+      if ( this->storage->getSwitchPin(4) > -1) {
+        this->sw4->loop();
+      }
+
     }
 
     void setup() {
       if (this->storage->getExternalSwitchPin() > -1) {
         pinMode(this->storage->getExternalSwitchPin(), INPUT);
       }
+      init();
     }
 
 
@@ -166,141 +177,105 @@ class Sonoff
       }
     }
 
-    int getRelayStatus(int ch) {
-      int relayStatus = -1;
+    bool getRelayStatus(int ch) {
+     bool relayStatus = false;
       switch (ch) {
         case 1: {
             if (storage->getRelayPin(1) > -1) {
               relayStatus = relay1->isOn();
             }
+            break;
           }
         case 2: {
             if (storage->getRelayPin(2) > -1) {
               relayStatus = relay2->isOn();
             }
+            break;
           }
         case 3: {
             if (storage->getRelayPin(3) > -1) {
               relayStatus = relay3->isOn();
             }
+            break;
           }
         case 4: {
             if (storage->getRelayPin(4) > -1) {
               relayStatus = relay4->isOn();
             }
+            break;
           }
         default: {
-            if (storage->getRelayPin(1) > -1) {
-              relayStatus = relay1->isOn();
-            }
+          Serial.println("getRelayStatus undefined channel");
+            break;
           }
       }
+      
+      return relayStatus;
     }
 
     void relayOn(int ch) {
-      switch (ch) {
-        case 1: {
-            if (storage->getRelayPin(1) > -1) {
-              relay1->on();
-            }
-          }
-        case 2: {
-            if (storage->getRelayPin(2) > -1) {
-              relay2->on();
-            }
-          }
-        case 3: {
-            if (storage->getRelayPin(3) > -1) {
-              relay3->on();
-            }
-          }
-        case 4: {
-            if (storage->getRelayPin(4) > -1) {
-              relay4->on();
-            }
-          }
-        default: {
-            if (storage->getRelayPin(1) > -1) {
-              relay1->on();
-            }
-          }
+      if (ch == 1) {
+        if (storage->getRelayPin(1) > -1) {
+            Serial.println("relay1 On");
+          this->relay1->on();
+        }
+      } else if (ch == 2) {
+        if (storage->getRelayPin(2) > -1) {
+             Serial.println("relay2 On");
+          this->relay2->on();
+        }
+      } else if (ch == 3) {
+        if (storage->getRelayPin(3) > -1) {
+             Serial.println("relay3 On");
+          this->relay3->on();
+        }
+      } else if (ch == 4) {
+        if (storage->getRelayPin(4) > -1) {
+            Serial.println("relay4 On");
+          this->relay4->on();
+        }
       }
     }
 
     void relayOff(int ch) {
-      switch (ch) {
-        case 1: {
-            if (storage->getRelayPin(1) > -1) {
-              relay1->off();
-            }
-          }
-        case 2: {
-            if (storage->getRelayPin(2) > -1) {
-              relay2->off();
-            }
-          }
-        case 3: {
-            if (storage->getRelayPin(3) > -1) {
-              relay3->off();
-            }
-          }
-        case 4: {
-            if (storage->getRelayPin(4) > -1) {
-              relay4->off();
-            }
-          }
-        default: {
-            if (storage->getRelayPin(1) > -1) {
-              relay1->off();
-            }
-          }
+       if (ch == 1) {
+        if (storage->getRelayPin(1) > -1) {
+            Serial.println("relay1 Off");
+          this->relay1->off();
+        }
+      } else if (ch == 2) {
+        if (storage->getRelayPin(2) > -1) {
+             Serial.println("relay2 Off");
+          this->relay2->off();
+        }
+      } else if (ch == 3) {
+        if (storage->getRelayPin(3) > -1) {
+             Serial.println("relay3 Off");
+          this->relay3->off();
+        }
+      } else if (ch == 4) {
+        if (storage->getRelayPin(4) > -1) {
+            Serial.println("relay4 Off");
+          this->relay4->off();
+        }
       }
     }
 
     String getRelayStatusAsString(int ch) {
-      switch (getRelayStatus(ch)) {
-        case 0: {
-            return "off";
-          }
-        case 1: {
-            return "on";
-          }
-        default: {
-            return "undefined";
-          }
-      }
+      bool s = getRelayStatus(ch);
+      return s ? "on" : "off";
     }
 
-    int getSwitchEvent(int ch) {
-      int ret = -1;
-      switch (ch) {
-        case 1: {
-            if (storage->getSwitchPin(1) > -1) {
-              ret = sw1->getEvent();
-            }
-          }
-        case 2: {
-            if (storage->getSwitchPin(2) > -1) {
-              ret = sw2->getEvent();
-            }
-          }
-        case 3: {
-            if (storage->getSwitchPin(3) > -1) {
-              ret = sw3->getEvent();
-            }
-          }
-        case 4: {
-            if (storage->getSwitchPin(4) > -1) {
-              ret = sw4->getEvent();
-            }
-          }
-        default: {
-            if (storage->getSwitchPin(1) > -1) {
-              ret = sw1->getEvent();
-            }
-          }
+    uint8_t getSwitchEvent(int ch) {
+      if (ch == 1) {
+        return this->sw1->getEvent();
+      } else if (ch == 2) {
+        return this->sw2->getEvent();
+      } else if (ch == 3) {
+        return this->sw3->getEvent();
+      } else if (ch == 4) {
+        return this->sw4->getEvent();
       }
-      return ret;
     }
 
 

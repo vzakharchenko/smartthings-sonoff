@@ -4,19 +4,6 @@
 #include "SamsungSmartThings.h"
 #include "CSE7766.h"
 
-// #define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:e:1"
-#define SSDP_ONECHANEL_DEVICE_TYPE "urn:sonoff:device:vzakharchenko:1"
-
-
-#ifdef SSDP_CSE776_DEVICE_TYPE
-#define SSDP_DEVICE_TYPE SSDP_CSE776_DEVICE_TYPE
-#define CSE7766_TYPE
-
-#else
-#define SSDP_DEVICE_TYPE SSDP_ONECHANEL_DEVICE_TYPE
-#endif //SSDP_CSE776_DEVICE_TYPE
-
-
 #define SONOFF_BASIC 0
 #define SONOFF_POW 1
 #define SONOFF_RF 2
@@ -58,6 +45,30 @@
 #define SONOFF_4CH_PRO 33
 #define ITEAD_SONOFF_IFAN02 34
 
+
+#ifdef SSDP_CSE776_DEVICE_TYPE
+#define SSDP_DEVICE_TYPE SSDP_CSE776_DEVICE_TYPE
+#define CSE7766_TYPE
+#endif //SSDP_CSE776_DEVICE_TYPE
+
+#ifdef SSDP_ONECHANEL_DEVICE_TYPE
+#define SSDP_DEVICE_TYPE SSDP_ONECHANEL_DEVICE_TYPE
+#endif //SSDP_ONECHANEL_DEVICE_TYPE
+
+#ifdef SSDP_2CHANEL_DEVICE_TYPE
+#define SSDP_DEVICE_TYPE SSDP_2CHANEL_DEVICE_TYPE
+#endif //SSDP_2CHANEL_DEVICE_TYPE
+
+#ifdef SSDP_3CHANEL_DEVICE_TYPE
+#define SSDP_DEVICE_TYPE SSDP_3CHANEL_DEVICE_TYPE
+#endif //SSDP_3CHANEL_DEVICE_TYPE
+
+#ifdef SSDP_4CHANEL_DEVICE_TYPE
+#define SSDP_DEVICE_TYPE SSDP_4CHANEL_DEVICE_TYPE
+#endif //SSDP_4CHANEL_DEVICE_TYPE
+
+
+
 class DeviceHandler
 {
   private:
@@ -89,7 +100,7 @@ class DeviceHandler
         // read CSE7766
         powR2.handle();
         yield();
-        smartThings->sendDirectlyData(
+        smartThings->sendCSE7766Data(
           String( "{\"cse7766\":{") +
           String("\"voltage\":\"") + String(powR2.getVoltage()) + String( "\",") +
           String("\"current\":\"") + String(powR2.getCurrent()) + String("\",") +
@@ -423,6 +434,7 @@ class Device
       switch (ch) {
         case 1: {
             return this->switch1Pin;
+            
           }
         case 2: {
             return this->switch2Pin;

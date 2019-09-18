@@ -114,22 +114,22 @@ def updated() {
                     "&externalSwitchState=${["HIGH", "LOW"].indexOf(gpio14State0)}" +
                     "&externalSwitchPin=${externalSwitchPin == null ? -1 : externalSwitchPin}" +
                     "&callback=${getCallBackAddress()}" +
-                    "&hub_host=${device.hub.getDataValue("localIP")}"+
+                    "&hub_host=${device.hub.getDataValue("localIP")}" +
                     "&hub_port=${device.hub.getDataValue("localSrvPortTCP")}"
             , "application/x-www-form-urlencoded")
     runIn(5, subscribeHandler);
     runEvery1Hour(subscribeHandler);
 }
 
-def subscribeHandler(){
+def subscribeHandler() {
     apiPost("/config", null,
-            "hub_host=${device.hub.getDataValue("localIP")}"+
+            "hub_host=${device.hub.getDataValue("localIP")}" +
                     "&hub_port=${device.hub.getDataValue("localSrvPortTCP")}"
             , "application/x-www-form-urlencoded")
     subscribeAction("/subscribe");
 }
 
-def subscribeCommand(){
+def subscribeCommand() {
     subscribeHandler();
 }
 
@@ -140,14 +140,30 @@ def parse(description) {
         def json = msg.json;
         if (json) {
             debug("Values received: ${json}")
-            if (json.relay == "on") {
-                forceOn();
-            } else if (json.relay == "off") {
-                forceOff();
+            if (json.action != null) {
+                if (json.relay1 == "on") {
+                    forceOn();
+                } else if (json.relay1 == "off") {
+                    forceOff();
+                }
+                if (json.ip) {
+                    setIp(json.ip);
+                }
+                if (json.action == "subscribe") {
+                    subscribeCommand();
+                }
+            } else {
+                if (json.relay == "on") {
+                    forceOn();
+                } else if (json.relay == "off") {
+                    forceOff();
+                }
+                if (json.ip) {
+                    setIp(json.ip);
+                }
             }
-            if (json.ip) {
-                setIp(json.ip);
-            }
+
+
         }
     }
 }
@@ -244,7 +260,7 @@ def apiPost(path, query, body, contentType) {
 }
 
 private String getCallBackAddress() {
-    return "http://"+device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP")+"/notify"
+    return "http://" + device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP") + "/notify"
 }
 
 private subscribeAction(path) {
@@ -256,10 +272,10 @@ private subscribeAction(path) {
             method: "SUBSCRIBE",
             path: path,
             headers: [
-                    HOST: url,
+                    HOST    : url,
                     CALLBACK: "<${address}>",
-                    NT: "upnp:event",
-                    TIMEOUT: "Second-28800"
+                    NT      : "upnp:event",
+                    TIMEOUT : "Second-28800"
             ]
     )
 
