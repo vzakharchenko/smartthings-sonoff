@@ -82,28 +82,31 @@ class SmartThings
     Storage* storage;
 
     void sendDirectlyData(String action, String data) {
-      HTTPClient http;
-       Serial.println ( "call CallBack Url " + storage->getCallBack() );
-      http.begin(storage->getCallBack());
-      http.addHeader("Content-Type", "application/json");
-      http.POST("{\"ip\":\""
-                + IpAddress2String( WiFi.localIP())
-                + "\",\"mac\":\""
-                + String(WiFi.macAddress())
-                + "\",\"action\":\""
-                + String(action)
-                + "\",\"data\":"
-                + String(data)
-                + ", \"relay1\": \""
-                + String(sonoff->getRelayStatusAsString(1))
-                + "\", \"relay2\": \""
-                + String(sonoff->getRelayStatusAsString(2))
-                + "\", \"relay3\": \""
-                + String(sonoff->getRelayStatusAsString(3))
-                + "\", \"relay4\": \""
-                + String(sonoff->getRelayStatusAsString(4))
-                + "\"}");
-      http.end();
+      if (storage->getCallBack() != String("")) {
+        HTTPClient http;
+        Serial.println ( "call CallBack Url " + storage->getCallBack() );
+        http.begin(storage->getCallBack());
+        http.addHeader("Content-Type", "application/json");
+        int code = http.POST("{\"ip\":\""
+                             + IpAddress2String( WiFi.localIP())
+                             + "\",\"mac\":\""
+                             + String(WiFi.macAddress())
+                             + "\",\"action\":\""
+                             + String(action)
+                             + "\",\"data\":"
+                             + String(data)
+                             + ", \"relay1\": \""
+                             + String(sonoff->getRelayStatusAsString(1))
+                             + "\", \"relay2\": \""
+                             + String(sonoff->getRelayStatusAsString(2))
+                             + "\", \"relay3\": \""
+                             + String(sonoff->getRelayStatusAsString(3))
+                             + "\", \"relay4\": \""
+                             + String(sonoff->getRelayStatusAsString(4))
+                             + "\"}");
+        Serial.println ( "Starting SmartThings Http code : " + String(code) );
+        http.end();
+      }
     }
 
   public:
@@ -140,8 +143,11 @@ class SmartThings
         Serial.println ( "Starting SmartThings Http current : " + url );
         http.beginInternal2(url, "https");
         http.addHeader("Content-Type", "application/json");
-        http.GET();
+        int code = http.GET();
+        Serial.println ( "Starting SmartThings Http code : " + String(code) );
+        Serial.println ( "getSmartThingsDeviceState end request" );
         String payload = http.getString();
+        Serial.println ( "getSmartThingsDeviceState end request payload" + payload );
         DynamicJsonDocument doc(2048);
         deserializeJson(doc, payload);
         JsonObject root = doc.to<JsonObject>();
@@ -189,34 +195,35 @@ class SmartThings
     //
     //    }
 
-    //    String subscribe() {
-    //      String payload = "{}";
-    //      if (String(storage->getApplicationId()) != String("") &&
-    //          String(storage->getAccessToken()) != String("")) {
-    //        HTTPClient2 http;
-    //        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
-    //                     + String(storage->getApplicationId())
-    //                     + "/get/subscribe?access_token=" + String(storage->getAccessToken()
-    //                         + "&ip=" + IpAddress2String( WiFi.localIP())
-    //                         + "&mac=" + String(WiFi.macAddress()));
-    //        Serial.println ( "Starting SmartThings Http current : " + url );
-    //        http.beginInternal2(url, "https");
-    //        http.addHeader("Content-Type", "application/json");
-    //        http.GET();
-    //        String payloadJSON = http.getString();
-    //        http.end();
-    //        if (payloadJSON != String("")) {
-    //          payload = payloadJSON;
-    //        }
-    //
-    //      }
-    //      return payload;
-    //
-    //    }
+    String subscribe() {
+      String payload = "{}";
+      if (String(storage->getApplicationId()) != String("") &&
+          String(storage->getAccessToken()) != String("")) {
+        HTTPClient2 http;
+        String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
+                     + String(storage->getApplicationId())
+                     + "/get/subscribe?access_token=" + String(storage->getAccessToken()
+                         + "&ip=" + IpAddress2String( WiFi.localIP())
+                         + "&mac=" + String(WiFi.macAddress()));
+        Serial.println ( "Starting SmartThings Http current : " + url );
+        http.beginInternal2(url, "https");
+        http.addHeader("Content-Type", "application/json");
+        int code = http.GET();
+        Serial.println ( "Starting SmartThings Http code : " + String(code) );
+        String payloadJSON = http.getString();
+        http.end();
+        if (payloadJSON != String("")) {
+          payload = payloadJSON;
+        }
 
-    void subscribe() {
-      sendDirectlyData("subscribe", "{}");
+      }
+      return payload;
+
     }
+
+    //    void subscribe() {
+    //      sendDirectlyData("subscribe", "{}");
+    //    }
 
     void sendCSE7766Data(String data) {
       sendDirectlyData("CSE7766", data);

@@ -130,10 +130,19 @@ public def fromMultiChannel(mac, json) {
 
 def initialize() {
     unsubscribe();
-    state.clearDevices = falseж
+    state.clearDevices = false;
     state.subscribe = false;
+    def allSonoffs = [];
+    searchDeviceWithMac().each {
+        allSonoffs.add(it.getDeviceNetworkId());
+    }
     if (sonoffs) {
         sonoffs.each {
+            allSonoffs.add(it);
+        }
+    }
+    if (allSonoffs) {
+        allSonoffs.each {
             def mac = it;
 
             def ip = state.sonoffMacDevices.get(mac);
@@ -142,7 +151,7 @@ def initialize() {
                 def sonoffDevice = searchDeviceByMac(mac);
 
                 if (sonoffDevice == null) {
-                    sonoffDevice = addChildDevice("vzakharchenko", "Sonoff Switch", mac, theHub.id, [label: "Sonoff(${mac})", name: "Sonoff(${mac})"])
+                    sonoffDevice = addChildDevice("vzakharchenko", "Sonoff Switch", mac, theHub, [label: "Sonoff(${mac})", name: "Sonoff(${mac})"])
                 }
                 sonoffDevice.setIp(ip);
                 sonoffDevice.setPort("80");
@@ -157,7 +166,7 @@ def initialize() {
                     def sonoffDevice = searchDeviceByMac(mac);
 
                     if (sonoffDevice == null) {
-                        sonoffDevice = addChildDevice("vzakharchenko", "Sonoff CSE7766 Switch", mac, theHub.id, [label: "Sonoff(${mac}) POWR2", name: "Sonoff(${mac}) POWR2"])
+                        sonoffDevice = addChildDevice("vzakharchenko", "Sonoff Power Meter Switch", mac, theHub, [label: "Sonoff(${mac}) POWR2", name: "Sonoff(${mac}) POWR2"])
                     }
                     sonoffDevice.setIp(ip);
                     sonoffDevice.setPort("80");
@@ -169,12 +178,12 @@ def initialize() {
                     def sonoffDevice = searchDeviceByMac(mac);
                     ip = state.sonoff2MacDevices.get(mac);
                     if (sonoffDevice == null) {
-                        sonoffDevice = addChildDevice("vzakharchenko", "Sonoff MultiChannel", mac, theHub.id, [label: "Sonoff(${mac}) MultiChannel", name: "Sonoff(${mac}) MultiChannel"])
+                        sonoffDevice = addChildDevice("vzakharchenko", "Sonoff MultiChannel", mac, theHub, [label: "Sonoff(${mac}) MultiChannel", name: "Sonoff(${mac}) MultiChannel"])
                         sonoffDevice.setChannels("2");
                     }
                     def sonoffDevice1 = searchDeviceByMacAndChannel(mac, 1);
                     if (sonoffDevice1 == null) {
-                        sonoffDevice1 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_1_${mac}", theHub.id, [label: "Sonoff(${mac}) 1", name: "Sonoff(${mac}) 1"])
+                        sonoffDevice1 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_1_${mac}", theHub, [label: "Sonoff(${mac}) 1", name: "Sonoff(${mac}) 1"])
                         sonoffDevice1.setIp(ip);
                         sonoffDevice1.setPort("80");
                         sonoffDevice1.setMac(mac);
@@ -182,7 +191,7 @@ def initialize() {
                     }
                     def sonoffDevice2 = searchDeviceByMacAndChannel(mac, 2);
                     if (sonoffDevice2 == null) {
-                        sonoffDevice2 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_2_${mac}", theHub.id, [label: "Sonoff(${mac}) 2", name: "Sonoff(${mac}) 2"])
+                        sonoffDevice2 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_2_${mac}", theHub, [label: "Sonoff(${mac}) 2", name: "Sonoff(${mac}) 2"])
                         sonoffDevice2.setIp(ip);
                         sonoffDevice2.setPort("80");
                         sonoffDevice2.setMac(mac);
@@ -196,7 +205,7 @@ def initialize() {
                         sonoffDevice2.setIp(ip);
                         sonoffDevice.setChannels("3");
                         if (sonoffDevice3 == null) {
-                            sonoffDevice3 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_3_${mac}", theHub.id, [label: "Sonoff(${mac}) 3", name: "Sonoff(${mac}) 3"])
+                            sonoffDevice3 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_3_${mac}", theHub, [label: "Sonoff(${mac}) 3", name: "Sonoff(${mac}) 3"])
                             sonoffDevice3.setIp(ip);
                             sonoffDevice3.setPort("80");
                             sonoffDevice3.setMac(mac);
@@ -209,14 +218,14 @@ def initialize() {
                             sonoffDevice2.setIp(ip);
                             sonoffDevice.setChannels("4");
                             if (sonoffDevice3 == null) {
-                                sonoffDevice3 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_3_${mac}", theHub.id, [label: "Sonoff(${mac}) 3", name: "Sonoff(${mac}) 3"])
+                                sonoffDevice3 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_3_${mac}", theHub, [label: "Sonoff(${mac}) 3", name: "Sonoff(${mac}) 3"])
                                 sonoffDevice3.setIp(ip);
                                 sonoffDevice3.setPort("80");
                                 sonoffDevice3.setMac(mac);
                                 sonoffDevice3.setChannel("3");
                             }
                             if (sonoffDevice4 == null) {
-                                sonoffDevice4 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_4_${mac}", theHub.id, [label: "Sonoff(${mac}) 4", name: "Sonoff(${mac}) 4"])
+                                sonoffDevice4 = addChildDevice("vzakharchenko", "Sonoff Channel Switch", "CH_4_${mac}", theHub, [label: "Sonoff(${mac}) 4", name: "Sonoff(${mac}) 4"])
                                 sonoffDevice4.setIp(ip);
                                 sonoffDevice4.setPort("80");
                                 sonoffDevice4.setMac(mac);
@@ -648,12 +657,12 @@ def searchDevicesType(devType) {
 }
 
 def searchDeviceWithMac() {
-    def device = getAllDevices().find {
+    def devices = getAllDevices().find {
         if (!it.getDeviceNetworkId().contains("CH_")) {
             return it;
         }
     }
-    return device;
+    return devices;
 }
 
 def searchDeviceByMac(mac) {

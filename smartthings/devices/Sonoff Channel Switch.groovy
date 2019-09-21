@@ -43,7 +43,7 @@ metadata {
 
 def updated() {
     apiPost("/config", null,
-    "&defaultState=${["Off", "On", "Latest", "SmartThings"].indexOf(powerStateAtStartup)}" +
+            "&defaultState=${["Off", "On", "Latest", "SmartThings"].indexOf(powerStateAtStartup)}" +
                     "&ch=${device.currentValue("channel")}"
             , "application/x-www-form-urlencoded")
 }

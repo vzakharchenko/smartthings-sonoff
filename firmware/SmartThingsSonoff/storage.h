@@ -1,11 +1,12 @@
 #ifndef Storage_h
 #define Storage_h
 
-// #define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:e:1:vassio"
+//#define SSDP_POW_DEVICE_TYPE "urn:sonoff:device:p:1:vassio"
+#define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:e:1:vassio"
 //#define SSDP_ONECHANEL_DEVICE_TYPE "urn:sonoff:device:1:vassio"
 //#define SSDP_2CHANEL_DEVICE_TYPE "urn:sonoff:device:2:vassio"
 //#define SSDP_3CHANEL_DEVICE_TYPE "urn:sonoff:device:3:vassio"
-#define SSDP_4CHANEL_DEVICE_TYPE "urn:sonoff:device:4:vassio"
+//#define SSDP_4CHANEL_DEVICE_TYPE "urn:sonoff:device:4:vassio"
 
 #ifdef SSDP_CSE776_DEVICE_TYPE
 #define DEFAULT_RELAY1  12
@@ -18,7 +19,19 @@
 #define DEFAULT_SWITCH4  -1
 #endif //SSDP_CSE776_DEVICE_TYPE
 
+#ifdef SSDP_POW_DEVICE_TYPE
+#define DEFAULT_RELAY1  12
+#define DEFAULT_SWITCH1  0
+#define DEFAULT_RELAY2  -1
+#define DEFAULT_SWITCH2  -1
+#define DEFAULT_RELAY3  -1
+#define DEFAULT_SWITCH3  -1
+#define DEFAULT_RELAY4  -1
+#define DEFAULT_SWITCH4  -1
+#endif //SSDP_POW_DEVICE_TYPE
+
 #ifdef SSDP_ONECHANEL_DEVICE_TYPE
+#define USE_LED_WHEN_SWITCH
 #define DEFAULT_RELAY1  12
 #define DEFAULT_SWITCH1  0
 #define DEFAULT_RELAY2  -1
@@ -237,7 +250,7 @@ class Storage
             -1,
             "OK"
           };
-           loadStruct(&readConfiguration, sizeof(readConfiguration));
+          loadStruct(&readConfiguration, sizeof(readConfiguration));
           Serial.println ( "Storage loaded" );
           if (String(readConfiguration.signature) == String("OK")) {
             Serial.println ( "Configuration is Valid: " + String(readConfiguration.signature) + " lastState: " + String(readConfiguration.lastState));

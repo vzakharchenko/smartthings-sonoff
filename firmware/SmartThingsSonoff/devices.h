@@ -3,6 +3,7 @@
 #include "Sonoff.h"
 #include "SamsungSmartThings.h"
 #include "CSE7766.h"
+#include "power.h"
 
 #define SONOFF_BASIC 0
 #define SONOFF_POW 1
@@ -51,6 +52,11 @@
 #define CSE7766_TYPE
 #endif //SSDP_CSE776_DEVICE_TYPE
 
+#ifdef SSDP_POW_DEVICE_TYPE
+#define SSDP_DEVICE_TYPE "urn:sonoff:device:e:1:vassio"
+#define POW_TYPE
+#endif //SSDP_POW_DEVICE_TYPE
+
 #ifdef SSDP_ONECHANEL_DEVICE_TYPE
 #define SSDP_DEVICE_TYPE SSDP_ONECHANEL_DEVICE_TYPE
 #endif //SSDP_ONECHANEL_DEVICE_TYPE
@@ -76,7 +82,13 @@ class DeviceHandler
 #ifdef CSE7766_TYPE
     CSE7766 powR2;
     unsigned long mLastTime = 0;
-#define POW_R2_UPDATE_TIME                     5000
+#define POW_R2_UPDATE_TIME 5000
+#endif //CSE7766
+
+#ifdef POW_TYPE
+    ESP8266PowerClass pow;
+    unsigned long mLastTime = 0;
+#define POW_UPDATE_TIME 5000
 #endif //CSE7766
   public:
     DeviceHandler(SmartThings *smartThings) {
@@ -84,16 +96,26 @@ class DeviceHandler
     }
     void begin() {
 #ifdef CSE7766_TYPE
+      Serial.println("Sonoff Pow R2 setup ");
       powR2.setRX(1);
       powR2.begin(); // will initialize serial to 4800 bps
 #endif //CSE7766_TYPE;
+#ifdef POW_TYPE
+      Serial.println("Sonoff Pow setup ");
+      Serial1.begin(115200);
+      pow.enableMeasurePower();
+      pow.selectMeasureCurrentOrVoltage(VOLTAGE);
+      pow.startMeasure();
+#endif //POW_TYPE;
+
+
     }
     void loop() {
 #ifdef CSE7766_TYPE
 
 
       if ((millis() - mLastTime) >= POW_R2_UPDATE_TIME) {
-
+        Serial.println("Sonoff Pow R2 loop ");
         // Time
         mLastTime = millis();
 
@@ -121,6 +143,38 @@ class DeviceHandler
 
       }
 #endif //CSE7766_TYPE
+
+#ifdef POW_TYPE
+
+
+      if ((millis() - mLastTime) >= POW_UPDATE_TIME) {
+        Serial.println("Sonoff Pow loop ");
+        // Time
+        mLastTime = millis();
+
+        yield();
+        smartThings->sendCSE7766Data(
+          String( "{\"cse7766\":{") +
+          String("\"voltage\":\"") + String(pow.getVoltage()) + String( "\",") +
+          String("\"current\":\"") + String(pow.getCurrent()) + String("\",") +
+          String("\"activePower\":\"" ) + String(pow.getPower()) + String("\",") +
+          String("\"apparentPower\":\"") + String(pow.getPower()) + String("\",") +
+          String("\"reactivePower\":\"") + String(pow.getPower()) + String("\",") +
+          String("\"energy\":\"") + String(0) + String("\"") +
+          String("}}")
+        );
+
+        Serial.println("Voltage " + String(pow.getVoltage()));
+        Serial.println("Current " + String(pow.getCurrent()));
+        Serial.println("ActivePower " + String(pow.getPower()));
+        Serial.println("ApparentPower " + String(pow.getPower()));
+        Serial.println("ReactivePower " + String(pow.getPower()));
+        Serial.println("PowerFactor " + String(pow.getPower()));
+        Serial.println("Energy " + String(0));
+
+      }
+#endif //POW_TYPE
+
 
     }
 };
@@ -434,7 +488,7 @@ class Device
       switch (ch) {
         case 1: {
             return this->switch1Pin;
-            
+
           }
         case 2: {
             return this->switch2Pin;

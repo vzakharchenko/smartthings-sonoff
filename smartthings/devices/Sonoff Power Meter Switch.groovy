@@ -1,5 +1,5 @@
 metadata {
-    definition(name: "Sonoff CSE7766 Switch", namespace: "vzakharchenko", author: "Vasiliy Zakharchenko", vid: "generic-switch") {
+    definition(name: "Sonoff Power Meter Switch", namespace: "vzakharchenko", author: "Vasiliy Zakharchenko", vid: "generic-switch") {
         capability "Actuator"
         capability "Power Meter"
         capability "Sensor"
@@ -19,7 +19,8 @@ metadata {
 
     preferences {
         def supportedDevices = [
-                "SONOFF POW R2"
+                "SONOFF POW R2",
+                "SONOFF POW",
         ];
         section() {
             input "deviceType", "enum", title: "Device Type", multiple: false, required: true, options: supportedDevices
@@ -98,15 +99,15 @@ def updated() {
     runEvery1Hour(subscribeHandler);
 }
 
-def subscribeHandler() {
+def subscribeHandler(){
     apiPost("/config", null,
-            "hub_host=${device.hub.getDataValue("localIP")}" +
+            "hub_host=${device.hub.getDataValue("localIP")}"+
                     "&hub_port=${device.hub.getDataValue("localSrvPortTCP")}"
             , "application/x-www-form-urlencoded")
     subscribeAction("/subscribe");
 }
 
-def subscribeCommand() {
+def subscribeCommand(){
     subscribeHandler();
 }
 
@@ -117,7 +118,7 @@ def parse(description) {
         def json = msg.json;
         if (json) {
             debug("Values received: ${json}")
-            if (json.action != null) {
+            if (json.action!= null){
                 if (json.relay1 == "on") {
                     forceOn();
                 } else if (json.relay1 == "off") {
@@ -126,10 +127,10 @@ def parse(description) {
                 if (json.ip) {
                     setIp(json.ip);
                 }
-                if (json.action == "subscribe") {
+                if (json.action=="subscribe") {
                     subscribeCommand();
                 }
-            } else {
+            } else{
                 if (json.relay == "on") {
                     forceOn();
                 } else if (json.relay == "off") {

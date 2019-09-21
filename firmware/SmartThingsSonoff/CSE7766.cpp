@@ -131,10 +131,10 @@
       if (1 == _pin_rx) {
           Serial.begin(CSE7766_BAUDRATE);
       } else {
-        /*  _serial = new SoftwareSerial(_pin_rx, SW_SERIAL_UNUSED_PIN, _inverted, 32);
+          _serial = new SoftwareSerial(_pin_rx, SW_SERIAL_UNUSED_PIN, _inverted, 32);
           _serial->enableIntTx(false);
           _serial->begin(CSE7766_BAUDRATE);
-          */
+          
       }
 
       _ready = true;

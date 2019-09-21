@@ -63,14 +63,18 @@ void switchOff(int ch) {
 
 void relayOn(int ch) {
   sonoff.relayOn(ch);
+#ifdef SSDP_ONECHANEL_DEVICE_TYPE
   digitalWrite ( sonoff.getLed(), storage.getLedInverse() == 0 ? 1 : 0 );
+#endif //SSDP_ONECHANEL_DEVICE_TYPE
 }
 
 
 
 void relayOff(int ch) {
   sonoff.relayOff(ch);
+#ifdef SSDP_ONECHANEL_DEVICE_TYPE
   digitalWrite ( sonoff.getLed(), storage.getLedInverse() == 0 ? 0 : 1 );
+#endif //SSDP_ONECHANEL_DEVICE_TYPE
 }
 
 
@@ -203,7 +207,6 @@ void handleOn () {
   server.send ( 200, "OK" );
 }
 
-
 void handleOff () {
   int ch = 1;
   String channelString = server.arg("ch");
@@ -306,19 +309,23 @@ void handleNotFound() {
 
 void loopChannel(int ch) {
   //   Serial.println ( "loopChannel  " + String(ch) );
-  if (sonoff.getSwitchEvent(ch) == SWITCH_EVENT_ON) {
-    Serial.println ( "loopChannel change state " + String(ch) + "  relay status: " + String(sonoff.getRelayStatus(ch)) );
-    if (sonoff.getRelayStatus(ch)) {
-      Serial.println ( "loopChannel off " + String(ch) );
-      switchOff(ch, true);
-    }
-    else {
-      if (!sonoff.getRelayStatus(ch)) {
-        Serial.println ( "loopChannel on " + String(ch) );
-        switchOn(ch, true);
+  uint8_t event = sonoff.getSwitchEvent(ch);
+  if (event > -1) {
+    if ( event == SWITCH_EVENT_ON) {
+      Serial.println ( "loopChannel change state " + String(ch) + "  relay status: " + String(sonoff.getRelayStatus(ch)) );
+      if (sonoff.getRelayStatus(ch)) {
+        Serial.println ( "loopChannel off " + String(ch) );
+        switchOff(ch, true);
+      }
+      else {
+        if (!sonoff.getRelayStatus(ch)) {
+          Serial.println ( "loopChannel on " + String(ch) );
+          switchOn(ch, true);
+        }
       }
     }
   }
+
 }
 
 void setupChannel(int i) {
@@ -369,7 +376,6 @@ void setup ( void ) {
     delay(5000);
   }
   ticker.detach();
-  digitalWrite ( sonoff.getLed(), 1 );
 
   Serial.println ( "" );
   Serial.print ( "Connected to " );
@@ -413,24 +419,28 @@ void setup ( void ) {
   sonoff.setup();
   Serial.println ( "subscribe  " );
   smartThings.subscribe();
-
+  digitalWrite ( sonoff.getLed(), storage.getLedInverse() == 0 ? 1 : 0 );
   setupChannel(1);
   setupChannel(2);
   setupChannel(3);
   setupChannel(4);
   int seq = storage.getSeq();
   storage.setSeq(seq + 1);
+
   deviceHandler.begin();
+
 }
 
 void loop ( void ) {
-
   server.handleClient();
   yield();
   sonoff.loop();
+  //Serial.println ( "sonoff looped  ");
   yield();
   deviceHandler.loop();
+  //Serial.println ( "deviceHandler looped  ");
   boolean buttonState = sonoff.IsButtonOn();
+  //Serial.println ( "buttonState :  " + String(buttonState));
   if (sonoff.IsButtonChanged()) {
     if (buttonState) {
       switchOn(1, true);
@@ -440,8 +450,12 @@ void loop ( void ) {
   }
 
   loopChannel(1);
+  // Serial.println ( "loopChannel 1  ");
   loopChannel(2);
+  // Serial.println ( "loopChannel 2  ");
   loopChannel(3);
+  //Serial.println ( "loopChannel 3  ");
   loopChannel(4);
+  // Serial.println ( "loopChannel 4  ");
 
 }
