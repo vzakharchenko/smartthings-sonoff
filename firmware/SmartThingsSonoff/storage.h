@@ -2,11 +2,11 @@
 #define Storage_h
 
 //#define SSDP_POW_DEVICE_TYPE "urn:sonoff:device:p:1:vassio"
-#define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:e:1:vassio"
+//#define SSDP_CSE776_DEVICE_TYPE "urn:sonoff:device:e:1:vassio"
 //#define SSDP_ONECHANEL_DEVICE_TYPE "urn:sonoff:device:1:vassio"
 //#define SSDP_2CHANEL_DEVICE_TYPE "urn:sonoff:device:2:vassio"
 //#define SSDP_3CHANEL_DEVICE_TYPE "urn:sonoff:device:3:vassio"
-//#define SSDP_4CHANEL_DEVICE_TYPE "urn:sonoff:device:4:vassio"
+#define SSDP_4CHANEL_DEVICE_TYPE "urn:sonoff:device:4:vassio"
 
 #ifdef SSDP_CSE776_DEVICE_TYPE
 #define DEFAULT_RELAY1  12

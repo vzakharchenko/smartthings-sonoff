@@ -49,12 +49,12 @@
 
 #ifdef SSDP_CSE776_DEVICE_TYPE
 #define SSDP_DEVICE_TYPE SSDP_CSE776_DEVICE_TYPE
-#define CSE7766_TYPE
+//#define CSE7766_TYPE
 #endif //SSDP_CSE776_DEVICE_TYPE
 
 #ifdef SSDP_POW_DEVICE_TYPE
 #define SSDP_DEVICE_TYPE "urn:sonoff:device:e:1:vassio"
-#define POW_TYPE
+//#define POW_TYPE
 #endif //SSDP_POW_DEVICE_TYPE
 
 #ifdef SSDP_ONECHANEL_DEVICE_TYPE
@@ -79,20 +79,22 @@ class DeviceHandler
 {
   private:
     SmartThings* smartThings;
+    Sonoff* sonoff;
 #ifdef CSE7766_TYPE
     CSE7766 powR2;
     unsigned long mLastTime = 0;
-#define POW_R2_UPDATE_TIME 5000
+#define POW_R2_UPDATE_TIME 15000
 #endif //CSE7766
 
 #ifdef POW_TYPE
     ESP8266PowerClass pow;
     unsigned long mLastTime = 0;
-#define POW_UPDATE_TIME 5000
+#define POW_UPDATE_TIME 15000
 #endif //CSE7766
   public:
-    DeviceHandler(SmartThings *smartThings) {
+    DeviceHandler(SmartThings *smartThings, Sonoff *sonoff) {
       this->smartThings = smartThings;
+      this->sonoff = sonoff;
     }
     void begin() {
 #ifdef CSE7766_TYPE
@@ -111,71 +113,73 @@ class DeviceHandler
 
     }
     void loop() {
+      if (sonoff->getRelayStatus(1)) {
 #ifdef CSE7766_TYPE
 
 
-      if ((millis() - mLastTime) >= POW_R2_UPDATE_TIME) {
-        Serial.println("Sonoff Pow R2 loop ");
-        // Time
-        mLastTime = millis();
+        if ((millis() - mLastTime) >= POW_R2_UPDATE_TIME) {
+          Serial.println("Sonoff Pow R2 loop ");
+          // Time
+          mLastTime = millis();
 
-        // read CSE7766
-        powR2.handle();
-        yield();
-        smartThings->sendCSE7766Data(
-          String( "{\"cse7766\":{") +
-          String("\"voltage\":\"") + String(powR2.getVoltage()) + String( "\",") +
-          String("\"current\":\"") + String(powR2.getCurrent()) + String("\",") +
-          String("\"activePower\":\"" ) + String(powR2.getActivePower()) + String("\",") +
-          String("\"apparentPower\":\"") + String(powR2.getApparentPower()) + String("\",") +
-          String("\"reactivePower\":\"") + String(powR2.getReactivePower()) + String("\",") +
-          String("\"energy\":\"") + String(powR2.getEnergy()) + String("\"") +
-          String("}}")
-        );
+          // read CSE7766
+          powR2.handle();
+          yield();
+          smartThings->sendCSE7766Data(
+            String( "{\"cse7766\":{") +
+            String("\"voltage\":\"") + String(powR2.getVoltage()) + String( "\",") +
+            String("\"current\":\"") + String(powR2.getCurrent()) + String("\",") +
+            String("\"activePower\":\"" ) + String(powR2.getActivePower()) + String("\",") +
+            String("\"apparentPower\":\"") + String(powR2.getApparentPower()) + String("\",") +
+            String("\"reactivePower\":\"") + String(powR2.getReactivePower()) + String("\",") +
+            String("\"energy\":\"") + String(powR2.getEnergy()) + String("\"") +
+            String("}}")
+          );
 
-        Serial.println("Voltage " + String(powR2.getVoltage()));
-        Serial.println("Current " + String(powR2.getCurrent()));
-        Serial.println("ActivePower " + String(powR2.getActivePower()));
-        Serial.println("ApparentPower " + String(powR2.getApparentPower()));
-        Serial.println("ReactivePower " + String(powR2.getReactivePower()));
-        Serial.println("PowerFactor " + String(powR2.getPowerFactor()));
-        Serial.println("Energy " + String(powR2.getEnergy()));
+          Serial.println("Voltage " + String(powR2.getVoltage()));
+          Serial.println("Current " + String(powR2.getCurrent()));
+          Serial.println("ActivePower " + String(powR2.getActivePower()));
+          Serial.println("ApparentPower " + String(powR2.getApparentPower()));
+          Serial.println("ReactivePower " + String(powR2.getReactivePower()));
+          Serial.println("PowerFactor " + String(powR2.getPowerFactor()));
+          Serial.println("Energy " + String(powR2.getEnergy()));
 
-      }
+        }
 #endif //CSE7766_TYPE
 
 #ifdef POW_TYPE
 
 
-      if ((millis() - mLastTime) >= POW_UPDATE_TIME) {
-        Serial.println("Sonoff Pow loop ");
-        // Time
-        mLastTime = millis();
+        if ((millis() - mLastTime) >= POW_UPDATE_TIME) {
+          Serial.println("Sonoff Pow loop ");
+          // Time
+          mLastTime = millis();
 
-        yield();
-        smartThings->sendCSE7766Data(
-          String( "{\"cse7766\":{") +
-          String("\"voltage\":\"") + String(pow.getVoltage()) + String( "\",") +
-          String("\"current\":\"") + String(pow.getCurrent()) + String("\",") +
-          String("\"activePower\":\"" ) + String(pow.getPower()) + String("\",") +
-          String("\"apparentPower\":\"") + String(pow.getPower()) + String("\",") +
-          String("\"reactivePower\":\"") + String(pow.getPower()) + String("\",") +
-          String("\"energy\":\"") + String(0) + String("\"") +
-          String("}}")
-        );
+          yield();
+          smartThings->sendCSE7766Data(
+            String( "{\"cse7766\":{") +
+            String("\"voltage\":\"") + String(pow.getVoltage()) + String( "\",") +
+            String("\"current\":\"") + String(pow.getCurrent()) + String("\",") +
+            String("\"activePower\":\"" ) + String(pow.getPower()) + String("\",") +
+            String("\"apparentPower\":\"") + String(pow.getPower()) + String("\",") +
+            String("\"reactivePower\":\"") + String(pow.getPower()) + String("\",") +
+            String("\"energy\":\"") + String(0) + String("\"") +
+            String("}}")
+          );
 
-        Serial.println("Voltage " + String(pow.getVoltage()));
-        Serial.println("Current " + String(pow.getCurrent()));
-        Serial.println("ActivePower " + String(pow.getPower()));
-        Serial.println("ApparentPower " + String(pow.getPower()));
-        Serial.println("ReactivePower " + String(pow.getPower()));
-        Serial.println("PowerFactor " + String(pow.getPower()));
-        Serial.println("Energy " + String(0));
+          Serial.println("Voltage " + String(pow.getVoltage()));
+          Serial.println("Current " + String(pow.getCurrent()));
+          Serial.println("ActivePower " + String(pow.getPower()));
+          Serial.println("ApparentPower " + String(pow.getPower()));
+          Serial.println("ReactivePower " + String(pow.getPower()));
+          Serial.println("PowerFactor " + String(pow.getPower()));
+          Serial.println("Energy " + String(0));
 
-      }
+        }
 #endif //POW_TYPE
 
 
+      }
     }
 };
 

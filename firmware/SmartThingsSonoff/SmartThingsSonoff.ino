@@ -13,7 +13,7 @@
 #include "Sonoff.h"
 #include "SamsungSmartThings.h"
 #include "devices.h"
-
+#include "keycloak.h"
 
 
 
@@ -31,11 +31,12 @@ ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 SSDPClass2 SSDP2;
 
-
+WiFiManager wifiManager;
 Storage storage;
 Sonoff sonoff(&storage);
 SmartThings smartThings(&sonoff, &storage );
-DeviceHandler deviceHandler(&smartThings);
+DeviceHandler deviceHandler(&smartThings, &sonoff);
+Keycloak keycloak(80);
 Ticker ticker;
 
 
@@ -92,20 +93,20 @@ void sw(int ch, boolean relayState) {
 void switchOn(int ch, boolean force) {
   if (force || !sonoff.getRelayStatus(ch)) {
     sw(ch, true);
-    smartThings.updateStates();
+
   }
 
-
+  smartThings.updateStates();
 
 }
 
 void switchOff(int ch , boolean force) {
   if (force || (sonoff.getRelayStatus(ch))) {
     sw(ch, false);
-    smartThings.updateStates();
+
   }
 
-
+  smartThings.updateStates();
 }
 
 
@@ -183,7 +184,9 @@ void handleSettings () {
     storage.setHubPort(value);
   }
   storage.save();
+  yield();
   sonoff.setup();
+  yield();
 }
 
 void handleDescription() {
@@ -286,8 +289,20 @@ void handleInfo () {
 }
 
 void handleRoot() {
-  server.send ( 200,
-                "{\"status\":\"OK\"}");
+  if (keycloak.isAuthorized()) {
+    server.send ( 200, "application/json", String("{") +
+                  String("\"status\":\"OK\"")  +
+                  String("}"));
+  }
+}
+
+void handleReset() {
+  wifiManager.resetSettings();
+  server.send ( 200, "application/json", String("{") +
+                String("\"status\":\"RESET\"")  +
+                String("}"));
+  Serial.println("Reset..");
+  ESP.restart();
 }
 
 void handleNotFound() {
@@ -363,11 +378,11 @@ void setup ( void ) {
   Serial.println ( "begin setup" );
   storage.load();
   pinMode ( sonoff.getLed(), OUTPUT );
-  Serial.begin ( 9600 );
+  Serial.begin ( 115200 );
   ticker.attach(0.6, tick);
-  WiFiManager wifiManager;
+
   // wifiManager.resetSettings();//todo
-  wifiManager.setTimeout(180);
+  // wifiManager.setTimeout(180);
   wifiManager.setAPCallback(configModeCallback);
   if (!wifiManager.autoConnect(ssid, password)) {
     Serial.println("failed to connect, we should reset as see if it connects");
@@ -394,9 +409,11 @@ void setup ( void ) {
   server.on ( "/on", handleOn);
   server.on ( "/off", handleOff );
   server.on ( "/info", handleInfo);
+  server.on ( "/reset", handleReset);
   server.on("/description.xml", handleDescription);
   server.on ( "/subscribe", handleSubscription );
   server.onNotFound ( handleNotFound );
+  keycloak.setup(&server);
   httpUpdater.setup(&server);
   server.begin();
   MDNS.addService("http", "tcp", 80);
@@ -439,8 +456,10 @@ void loop ( void ) {
   yield();
   deviceHandler.loop();
   //Serial.println ( "deviceHandler looped  ");
+  yield();
   boolean buttonState = sonoff.IsButtonOn();
   //Serial.println ( "buttonState :  " + String(buttonState));
+  yield();
   if (sonoff.IsButtonChanged()) {
     if (buttonState) {
       switchOn(1, true);
@@ -448,14 +467,18 @@ void loop ( void ) {
       switchOff(1, true);
     }
   }
-
+  yield();
   loopChannel(1);
+  yield();
   // Serial.println ( "loopChannel 1  ");
   loopChannel(2);
+  yield();
   // Serial.println ( "loopChannel 2  ");
   loopChannel(3);
+  yield();
   //Serial.println ( "loopChannel 3  ");
   loopChannel(4);
+  yield();
   // Serial.println ( "loopChannel 4  ");
 
 }

@@ -4,50 +4,58 @@
 typedef struct
 {
   int state;
-  char devName[256];
+  char devName[512];
 } SmartThingDevice;
 
-class TransportTraits
+typedef struct
 {
-  public:
-    virtual ~TransportTraits()
-    {
-    }
+  SmartThingDevice device1;
+  SmartThingDevice device2;
+  SmartThingDevice device3;
+  SmartThingDevice device4;
+} SmartThingDevices;
 
-    virtual std::unique_ptr<WiFiClient> create()
-    {
-      return std::unique_ptr<WiFiClient>(new WiFiClient());
-    }
-
-    virtual bool verify(WiFiClient& client, const char* host)
-    {
-      (void)client;
-      (void)host;
-      return true;
-    }
-};
-
-class TLSTraits : public TransportTraits
-{
-  public:
-    TLSTraits()
-    {
-    }
-
-    std::unique_ptr<WiFiClient> create() override
-    {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored  "-Wdeprecated-declarations"
-      return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
-#pragma GCC diagnostic pop
-    }
-
-    bool verify(WiFiClient& client, const char* host) override
-    {
-      auto wcs = static_cast<WiFiClientSecure&>(client);
-      return true;
-    }
-};
+//class TransportTraits
+//{
+//  public:
+//    virtual ~TransportTraits()
+//    {
+//    }
+//
+//    virtual std::unique_ptr<WiFiClient> create()
+//    {
+//      return std::unique_ptr<WiFiClient>(new WiFiClient());
+//    }
+//
+//    virtual bool verify(WiFiClient& client, const char* host)
+//    {
+//      (void)client;
+//      (void)host;
+//      return true;
+//    }
+//};
+//
+//class TLSTraits : public TransportTraits
+//{
+//  public:
+//    TLSTraits()
+//    {
+//    }
+//
+//    std::unique_ptr<WiFiClient> create() override
+//    {
+//#pragma GCC diagnostic push
+//#pragma GCC diagnostic ignored  "-Wdeprecated-declarations"
+//      return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
+//#pragma GCC diagnostic pop
+//    }
+//
+//    bool verify(WiFiClient& client, const char* host) override
+//    {
+//      auto wcs = static_cast<WiFiClientSecure&>(client);
+//      return true;
+//    }
+//};
 
 String IpAddress2String(const IPAddress& ipAddress)
 {
@@ -58,20 +66,20 @@ String IpAddress2String(const IPAddress& ipAddress)
   return ip  ;
 }
 
-class HTTPClient2 : public HTTPClient
-{
-  public:
-    HTTPClient2()
-    {
-    }
-
-    bool beginInternal2(String url, const char* expectedProtocol)
-    {
-      _transportTraits = TransportTraitsPtr(new TLSTraits());
-      _port = 443;
-      return beginInternal(url, expectedProtocol);
-    }
-};
+//class HTTPClient2 : public HTTPClient
+//{
+//  public:
+//    HTTPClient2()
+//    {
+//    }
+//
+//    bool beginInternal2(String url, const char* expectedProtocol)
+//    {
+//      _transportTraits = TransportTraitsPtr(new TLSTraits());
+//      _port = 443;
+//      return beginInternal(url, expectedProtocol);
+//    }
+//};
 
 
 class SmartThings
@@ -86,7 +94,10 @@ class SmartThings
         HTTPClient http;
         Serial.println ( "call CallBack Url " + storage->getCallBack() );
         http.begin(storage->getCallBack());
+        http.setTimeout(10000);
+        yield();
         http.addHeader("Content-Type", "application/json");
+        yield();
         int code = http.POST("{\"ip\":\""
                              + IpAddress2String( WiFi.localIP())
                              + "\",\"mac\":\""
@@ -104,7 +115,48 @@ class SmartThings
                              + "\", \"relay4\": \""
                              + String(sonoff->getRelayStatusAsString(4))
                              + "\"}");
+        yield();
         Serial.println ( "Starting SmartThings Http code : " + String(code) );
+        http.end();
+      }
+    }
+
+    void sendCloudData(String action, String data) {
+      Serial.println ( "Starting SmartThings Update" );
+      String smartThingsUrl = storage->getSmartThingsUrl();
+      if (String(storage->getApplicationId()) != String("") &&
+          String(storage->getAccessToken()) != String("") &&
+          smartThingsUrl != String("")) {
+        HTTPClient http;
+
+        String url = smartThingsUrl + "/api/smartapps/installations/"
+                     + String(storage->getApplicationId())
+                     + "/" + "init?access_token=" + String(storage->getAccessToken()
+                         + "&ip=" + IpAddress2String( WiFi.localIP())
+                         + "&mac=" + String(WiFi.macAddress())
+                         + "&relay1=" + String(sonoff->getRelayStatusAsString(1)) +
+                         + "&relay2=" + String(sonoff->getRelayStatusAsString(2)) +
+                         + "&relay3=" + String(sonoff->getRelayStatusAsString(3)) +
+                         + "&relay4=" + String(sonoff->getRelayStatusAsString(4))
+                                                          );
+        Serial.println ( "Sending Http Get " + url );
+        http.begin(url);
+        http.setTimeout(10000);
+        http.addHeader("Content-Type", "application/json");/*
+        http.POST("{\"ip\":\""
+                  + IpAddress2String( WiFi.localIP())
+                  + "\",\"supportedDevices\":"
+                  + getDeviceJson()
+                  + ",\"mac\":\""
+                  + String(WiFi.macAddress())
+                  + "\", \"relay\": \""
+                  + String(sonoff->getRelay()->isOn() ? "on" : "off")
+                  + "\"}");*/
+        yield();
+        http.GET();
+        yield();
+        //   http.writeToStream(&Serial);
+        Serial.println ( "success connected" );
         http.end();
       }
     }
@@ -118,7 +170,7 @@ class SmartThings
     }
 
     void updateStates() {
-      sendDirectlyData("changeState", "{}");
+      sendCloudData("changeState", "{}");
     }
 
     int getSwitchState(int ch) {
@@ -133,7 +185,7 @@ class SmartThings
       };
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
-        HTTPClient2 http;
+        HTTPClient http;
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
                      + String(storage->getApplicationId())
                      + "/get/info?access_token=" + String(storage->getAccessToken()
@@ -141,9 +193,11 @@ class SmartThings
                          + "&mac=" + String(WiFi.macAddress())
                          + "&ch=" + String(ch));
         Serial.println ( "Starting SmartThings Http current : " + url );
-        http.beginInternal2(url, "https");
+        http.begin(url);
         http.addHeader("Content-Type", "application/json");
+        yield();
         int code = http.GET();
+        yield();
         Serial.println ( "Starting SmartThings Http code : " + String(code) );
         Serial.println ( "getSmartThingsDeviceState end request" );
         String payload = http.getString();
@@ -168,6 +222,7 @@ class SmartThings
 
       return smartThingsDevice;
     }
+
     //
     //    String getSmartThingsDevice(int ch) {
     //      String payload = "{}";
@@ -199,16 +254,18 @@ class SmartThings
       String payload = "{}";
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
-        HTTPClient2 http;
+        HTTPClient http;
         String url = String(storage->getSmartThingsUrl()) + "/api/smartapps/installations/"
                      + String(storage->getApplicationId())
                      + "/get/subscribe?access_token=" + String(storage->getAccessToken()
                          + "&ip=" + IpAddress2String( WiFi.localIP())
                          + "&mac=" + String(WiFi.macAddress()));
         Serial.println ( "Starting SmartThings Http current : " + url );
-        http.beginInternal2(url, "https");
+        http.begin(url);
         http.addHeader("Content-Type", "application/json");
+        yield();
         int code = http.GET();
+        yield();
         Serial.println ( "Starting SmartThings Http code : " + String(code) );
         String payloadJSON = http.getString();
         http.end();
@@ -222,7 +279,7 @@ class SmartThings
     }
 
     //    void subscribe() {
-    //      sendDirectlyData("subscribe", "{}");
+    //      sendCloudData("subscribe", "{}");
     //    }
 
     void sendCSE7766Data(String data) {
@@ -235,7 +292,7 @@ class SmartThings
       if (String(storage->getApplicationId()) != String("") &&
           String(storage->getAccessToken()) != String("")) {
 
-        HTTPClient2 http;
+        HTTPClient http;
         String url = smartThingsUrl + "/api/smartapps/installations/"
                      + String(storage->getApplicationId())
                      + "/" + "init?access_token=" + String(storage->getAccessToken()
@@ -247,7 +304,7 @@ class SmartThings
                          + "&relay4=" + String(sonoff->getRelayStatusAsString(4))
                                                           );
         Serial.println ( "Sending Http Get " + url );
-        http.beginInternal2(url, "https");
+        http.begin(url);
         http.setTimeout(10000);
         http.addHeader("Content-Type", "application/json");/*
         http.POST("{\"ip\":\""
@@ -259,7 +316,9 @@ class SmartThings
                   + "\", \"relay\": \""
                   + String(sonoff->getRelay()->isOn() ? "on" : "off")
                   + "\"}");*/
+        yield();
         http.GET();
+        yield();
         //   http.writeToStream(&Serial);
         Serial.println ( "success connected" );
         String payload = http.getString();

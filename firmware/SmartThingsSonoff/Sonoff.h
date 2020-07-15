@@ -115,24 +115,25 @@ class Sonoff
       if (storage->getSwitchPin(4) > -1) {
         this->sw4 =  new Switch( storage->getSwitchPin(4), false, 2, 5);
       }
+      yield();
     }
 
     void loop() {
       if ( this->storage->getRelayPin(1) > -1) {
-       // Serial.println ( "relay 1 loop" );
+        // Serial.println ( "relay 1 loop" );
         this->relay1->loop();
       }
       if ( this->storage->getSwitchPin(1) > -1) {
-       // Serial.println ( "switch 1 loop" );
+        // Serial.println ( "switch 1 loop" );
         this->sw1->loop();
       }
 
       if ( this->storage->getRelayPin(2) > -1) {
-       // Serial.println ( "relay 2 loop" );
+        // Serial.println ( "relay 2 loop" );
         this->relay2->loop();
       }
       if ( this->storage->getSwitchPin(2) > -1) {
-       // Serial.println ( "switch 2 loop" );
+        // Serial.println ( "switch 2 loop" );
         this->sw2->loop();
       }
 
@@ -141,16 +142,16 @@ class Sonoff
         this->relay3->loop();
       }
       if ( this->storage->getSwitchPin(3) > -1) {
-       // Serial.println ( "switch 3 loop" );
+        // Serial.println ( "switch 3 loop" );
         this->sw3->loop();
       }
 
       if ( this->storage->getRelayPin(4) > -1) {
-       // Serial.println ( "relay 4 loop" );
+        // Serial.println ( "relay 4 loop" );
         this->relay4->loop();
       }
       if ( this->storage->getSwitchPin(4) > -1) {
-       // Serial.println ( "switch 4 loop" );
+        // Serial.println ( "switch 4 loop" );
         this->sw4->loop();
       }
 
@@ -276,11 +277,11 @@ class Sonoff
       if (ch == 1) {
         return storage->getSwitchPin(1) > -1 ? this->sw1->getEvent() : -1;
       } else if (ch == 2) {
-        return storage->getSwitchPin(2) > -1 ? this->sw2->getEvent():-1;
+        return storage->getSwitchPin(2) > -1 ? this->sw2->getEvent() : -1;
       } else if (ch == 3) {
-        return storage->getSwitchPin(3) > -1 ? this->sw3->getEvent():-1;
+        return storage->getSwitchPin(3) > -1 ? this->sw3->getEvent() : -1;
       } else if (ch == 4) {
-        return storage->getSwitchPin(4) > -1 ?this->sw4->getEvent():-1;
+        return storage->getSwitchPin(4) > -1 ? this->sw4->getEvent() : -1;
       }
     }
 

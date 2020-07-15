@@ -28,6 +28,7 @@ class Relay
 
 
     void loop() {
+      yield();
     }
 
 };
