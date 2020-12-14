@@ -1,5 +1,7 @@
 # smartthings-sonoff
+[![donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://secure.wayforpay.com/button/ba4989d5abdf7)  
 integration smartthings and sonoff devices
+
 
 # Supported Devices
 SONOFF BASIC,
